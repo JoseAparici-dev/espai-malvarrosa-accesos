@@ -109,7 +109,7 @@ const styles = {
     btnVolver: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
     inputFecha: { padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' },
     documento: { backgroundColor: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },
-    titulo: { textAlign: 'center', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem' },
+    titulo: { textAlign: 'center', fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.25rem', color: '#111' },
     fechaDoc: { textAlign: 'center', color: '#666', marginBottom: '1.5rem', fontSize: '0.9rem' },
     info: { textAlign: 'center', color: '#666' },
     tabla: { width: '100%', borderCollapse: 'collapse' },
