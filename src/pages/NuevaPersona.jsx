@@ -44,6 +44,7 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
   async function handleGuardar() {
     setError('')
     if (!nombre.trim()) return setError('El nombre es obligatorio')
+    if (!nombre.includes(',')) return setError('Introduce el nombre como "Apellidos, Nombre"')
     if (!carnetUpv && !dni.trim()) return setError('El DNI es obligatorio si no tiene carnet UPV')
     if (!orgId && !nuevaOrg.trim()) return setError('La organización es obligatoria')
 
@@ -87,7 +88,7 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
             style={{ ...styles.input, margin: 0 }}
             value={nombre}
             onChange={e => { setNombre(e.target.value); buscarSugerencias(e.target.value); setMostrarSugerencias(true) }}
-            placeholder="Nombre completo"
+            placeholder="Apellidos, Nombre"
             autoFocus
             onFocus={e => { e.target.setSelectionRange(e.target.value.length, e.target.value.length); setMostrarSugerencias(true) }}
             onBlur={() => setTimeout(() => setMostrarSugerencias(false), 150)}

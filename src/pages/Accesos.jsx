@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import NuevaPersona from './NuevaPersona'
+import RegistroDiario from './RegistroDiario'
 
 export default function Accesos() {
   const [busqueda, setBusqueda] = useState('')
@@ -8,6 +9,7 @@ export default function Accesos() {
   const [aforo, setAforo] = useState(0)
   const [loading, setLoading] = useState(false)
   const [mostrarNueva, setMostrarNueva] = useState(false)
+  const [mostrarRegistro, setMostrarRegistro] = useState(false)
 
   useEffect(() => {
     cargarAforo()
@@ -56,6 +58,8 @@ export default function Accesos() {
     await supabase.auth.signOut()
   }
 
+  if (mostrarRegistro) return <RegistroDiario onVolver={() => setMostrarRegistro(false)} />
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -63,12 +67,15 @@ export default function Accesos() {
           <h1 style={styles.titulo}>Espai Malvarrosa</h1>
           <p style={styles.subtitulo}>Control d'accessos</p>
         </div>
-      <div style={styles.aforoBox}>
-        <span style={styles.aforoNum}>{aforo}</span>
-        <span style={styles.aforoLabel}>Dins ara</span>
-     </div>
-      <button style={styles.btnSalir} onClick={cerrarSesion}>Salir</button>
-    </div>
+        <div style={styles.aforoBox}>
+          <span style={styles.aforoNum}>{aforo}</span>
+          <span style={styles.aforoLabel}>Dins ara</span>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={styles.btnRegistro} onClick={() => setMostrarRegistro(true)}>📋 Registro</button>
+          <button style={styles.btnSalir} onClick={cerrarSesion}>Salir</button>
+        </div>
+      </div>
 
       <div style={styles.buscadorBox}>
         <input
@@ -83,19 +90,19 @@ export default function Accesos() {
       {loading && <p style={styles.info}>Buscando...</p>}
 
       {personas.length === 0 && busqueda.length >= 2 && !loading && (
-  <div style={{ textAlign: 'center', padding: '1rem' }}>
-    <p style={styles.info}>No se encontró ninguna persona.</p>
-    <button style={styles.btnNueva} onClick={() => setMostrarNueva(true)}>+ Nueva persona</button>
-  </div>
-)}
+        <div style={{ textAlign: 'center', padding: '1rem' }}>
+          <p style={styles.info}>No se encontró ninguna persona.</p>
+          <button style={styles.btnNueva} onClick={() => setMostrarNueva(true)}>+ Nueva persona</button>
+        </div>
+      )}
 
-{mostrarNueva && (
-  <NuevaPersona
-    nombreInicial={busqueda}
-    onGuardado={() => { setMostrarNueva(false); buscarPersonas(busqueda) }}
-    onCancelar={() => setMostrarNueva(false)}
-  />
-)}
+      {mostrarNueva && (
+        <NuevaPersona
+          nombreInicial={busqueda}
+          onGuardado={() => { setMostrarNueva(false); buscarPersonas(busqueda) }}
+          onCancelar={() => setMostrarNueva(false)}
+        />
+      )}
 
       <div style={styles.lista}>
         {personas.map(persona => (
@@ -157,4 +164,5 @@ const styles = {
   cardBotones: { display: 'flex', gap: '0.5rem' },
   btn: { padding: '0.5rem 1rem', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.875rem' },
   btnNueva: { padding: '0.75rem 1.5rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' },
+  btnRegistro: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
 }
