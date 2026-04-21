@@ -12,9 +12,28 @@ export default function Login() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) setError('Email o contraseña incorrectos')
+    if (error) {
+      setError('Email o contraseña incorrectos')
+      setLoading(false)
+      return
+    }
+
+    // Verificar que el operador está activo
+    const { data: operador } = await supabase
+      .from('operadores')
+      .select('activo')
+      .eq('id', data.user.id)
+      .single()
+
+    if (!operador?.activo) {
+      await supabase.auth.signOut()
+      setError('Tu cuenta está desactivada. Contacta con el administrador.')
+      setLoading(false)
+      return
+    }
+
     setLoading(false)
   }
 

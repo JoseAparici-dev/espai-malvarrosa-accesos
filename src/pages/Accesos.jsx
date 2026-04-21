@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import NuevaPersona from './NuevaPersona'
 import RegistroDiario from './RegistroDiario'
+import PanelAdmin from './PanelAdmin'
 
 export default function Accesos() {
   const [busqueda, setBusqueda] = useState('')
@@ -10,9 +11,19 @@ export default function Accesos() {
   const [loading, setLoading] = useState(false)
   const [mostrarNueva, setMostrarNueva] = useState(false)
   const [mostrarRegistro, setMostrarRegistro] = useState(false)
+  const [esAdmin, setEsAdmin] = useState(false)
+  const [mostrarAdmin, setMostrarAdmin] = useState(false)
 
   useEffect(() => {
     cargarAforo()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      supabase
+        .from('operadores')
+        .select('rol')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => setEsAdmin(data?.rol === 'admin'))
+    })
   }, [])
 
   async function cargarAforo() {
@@ -59,6 +70,7 @@ export default function Accesos() {
   }
 
   if (mostrarRegistro) return <RegistroDiario onVolver={() => setMostrarRegistro(false)} />
+  if (mostrarAdmin) return <PanelAdmin onVolver={() => setMostrarAdmin(false)} />
 
   return (
     <div style={styles.container}>
@@ -74,6 +86,9 @@ export default function Accesos() {
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button style={styles.btnRegistro} onClick={() => setMostrarRegistro(true)}>📋 Registro</button>
           <button style={styles.btnSalir} onClick={cerrarSesion}>Salir</button>
+          {esAdmin && (
+            <button style={styles.btnAdmin} onClick={() => setMostrarAdmin(true)}>⚙️ Admin</button>
+          )}
         </div>
       </div>
 
@@ -165,4 +180,5 @@ const styles = {
   btn: { padding: '0.5rem 1rem', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.875rem' },
   btnNueva: { padding: '0.75rem 1.5rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' },
   btnRegistro: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
+  btnAdmin: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
 }
