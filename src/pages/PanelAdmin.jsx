@@ -15,6 +15,24 @@ export default function PanelAdmin({ onVolver }) {
     const [nuevoRol, setNuevoRol] = useState('operador')
     const [errorOperador, setErrorOperador] = useState('')
     const [loadingOperador, setLoadingOperador] = useState(false)
+    const [operadorEditando, setOperadorEditando] = useState(null)
+    const [editNombre, setEditNombre] = useState('')
+    const [editEmail, setEditEmail] = useState('')
+    const [editRol, setEditRol] = useState('operador')
+    const [editPassword, setEditPassword] = useState('')
+    const [errorEditar, setErrorEditar] = useState('')
+    const [loadingEditar, setLoadingEditar] = useState(false)
+    const [personaEditando, setPersonaEditando] = useState(null)
+    const [editPersonaNombre, setEditPersonaNombre] = useState('')
+    const [editPersonaDni, setEditPersonaDni] = useState('')
+    const [editPersonaCarnetUpv, setEditPersonaCarnetUpv] = useState(false)
+    const [editPersonaOrgId, setEditPersonaOrgId] = useState('')
+    const [errorEditarPersona, setErrorEditarPersona] = useState('')
+    const [loadingEditarPersona, setLoadingEditarPersona] = useState(false)
+    const [orgEditando, setOrgEditando] = useState(null)
+    const [editOrgNombre, setEditOrgNombre] = useState('')
+    const [errorEditarOrg, setErrorEditarOrg] = useState('')
+    const [loadingEditarOrg, setLoadingEditarOrg] = useState(false)
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => setMiId(user.id))
@@ -87,6 +105,114 @@ export default function PanelAdmin({ onVolver }) {
         setLoadingOperador(false)
     }
 
+
+    async function guardarOperador() {
+        setErrorEditar('')
+        if (!editNombre.trim()) return setErrorEditar('El nombre es obligatorio')
+        if (!editEmail.trim()) return setErrorEditar('El email es obligatorio')
+
+        setLoadingEditar(true)
+        const { error } = await supabase.rpc('modificar_operador', {
+            p_id: operadorEditando.id,
+            p_nombre: editNombre.trim(),
+            p_email: editEmail.trim(),
+            p_rol: editRol,
+            p_password: editPassword || null
+        })
+
+        if (error) {
+            setErrorEditar('Error al modificar: ' + error.message)
+        } else {
+            setOperadorEditando(null)
+            setEditPassword('')
+            cargarOperadores()
+        }
+        setLoadingEditar(false)
+    }
+
+    async function eliminarOperador(id) {
+        if (!window.confirm('¿Seguro que quieres eliminar este operador?')) return
+
+        const { error } = await supabase.rpc('eliminar_operador', { p_id: id })
+
+        if (error) {
+            alert('No se puede eliminar: ' + error.message)
+        } else {
+            cargarOperadores()
+        }
+    }
+
+    async function guardarPersona() {
+        setErrorEditarPersona('')
+        if (!editPersonaNombre.trim()) return setErrorEditarPersona('El nombre es obligatorio')
+        if (!editPersonaNombre.includes(',')) return setErrorEditarPersona('Introduce el nombre como "Apellidos, Nombre"')
+        if (!editPersonaCarnetUpv && !editPersonaDni.trim()) return setErrorEditarPersona('El DNI es obligatorio si no tiene carnet UPV')
+        if (!editPersonaOrgId) return setErrorEditarPersona('La organización es obligatoria')
+
+        setLoadingEditarPersona(true)
+
+        const { error } = await supabase
+            .from('personas')
+            .update({
+                nombre: editPersonaNombre.trim(),
+                dni: editPersonaCarnetUpv ? null : editPersonaDni.trim().toUpperCase(),
+                carnet_upv: editPersonaCarnetUpv,
+                organizacion_id: editPersonaOrgId
+            })
+            .eq('id', personaEditando.id)
+
+        if (error) {
+            setErrorEditarPersona('Error al guardar: ' + error.message)
+        } else {
+            setPersonaEditando(null)
+            cargarPersonas()
+        }
+        setLoadingEditarPersona(false)
+    }
+
+    async function eliminarPersona(id) {
+        if (!window.confirm('¿Seguro que quieres eliminar esta persona?')) return
+
+        const { error } = await supabase.rpc('eliminar_persona', { p_id: id })
+
+        if (error) {
+            alert('No se puede eliminar: ' + error.message)
+        } else {
+            cargarPersonas()
+        }
+    }
+
+    async function guardarOrganizacion() {
+        setErrorEditarOrg('')
+        if (!editOrgNombre.trim()) return setErrorEditarOrg('El nombre es obligatorio')
+
+        setLoadingEditarOrg(true)
+        const { error } = await supabase
+            .from('organizaciones')
+            .update({ nombre: editOrgNombre.trim() })
+            .eq('id', orgEditando.id)
+
+        if (error) {
+            setErrorEditarOrg('Error al guardar: ' + error.message)
+        } else {
+            setOrgEditando(null)
+            cargarOrganizaciones()
+        }
+        setLoadingEditarOrg(false)
+    }
+
+    async function eliminarOrganizacion(id) {
+        if (!window.confirm('¿Seguro que quieres eliminar esta organización?')) return
+
+        const { error } = await supabase.rpc('eliminar_organizacion', { p_id: id })
+
+        if (error) {
+            alert('No se puede eliminar: ' + error.message)
+        } else {
+            cargarOrganizaciones()
+        }
+    }
+
     return (
         <div style={styles.container}>
             <div style={styles.header}>
@@ -104,18 +230,69 @@ export default function PanelAdmin({ onVolver }) {
 
             {!loading && seccion === 'personas' && (
                 <div style={styles.lista}>
+                    {personaEditando && (
+                        <div style={styles.formulario}>
+                            <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Modificar persona</h3>
+                            <label style={styles.label}>Nombre (Apellidos, Nombre) *</label>
+                            <input style={styles.input} value={editPersonaNombre} onChange={e => setEditPersonaNombre(e.target.value)} />
+                            <label style={styles.label}>¿Tiene carnet UPV?</label>
+                            <div style={styles.toggle}>
+                                <button style={{ ...styles.toggleBtn, ...(editPersonaCarnetUpv ? styles.toggleActivo : {}) }} onClick={() => setEditPersonaCarnetUpv(true)}>Sí</button>
+                                <button style={{ ...styles.toggleBtn, ...(!editPersonaCarnetUpv ? styles.toggleActivo : {}) }} onClick={() => setEditPersonaCarnetUpv(false)}>No</button>
+                            </div>
+                            {!editPersonaCarnetUpv && (
+                                <>
+                                    <label style={styles.label}>DNI *</label>
+                                    <input style={styles.input} value={editPersonaDni} onChange={e => setEditPersonaDni(e.target.value)} />
+                                </>
+                            )}
+                            <label style={styles.label}>Organización *</label>
+                            <select style={styles.input} value={editPersonaOrgId} onChange={e => setEditPersonaOrgId(e.target.value)}>
+                                {organizaciones.filter(o => o.activo).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                            </select>
+                            {errorEditarPersona && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorEditarPersona}</p>}
+                            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                <button style={styles.btnCancelar} onClick={() => setPersonaEditando(null)}>Cancelar</button>
+                                <button style={styles.btnGuardar} onClick={guardarPersona} disabled={loadingEditarPersona}>
+                                    {loadingEditarPersona ? 'Guardando...' : 'Guardar cambios'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {personas.map(p => (
                         <div key={p.id} style={{ ...styles.card, opacity: p.activo ? 1 : 0.5 }}>
                             <div style={styles.cardInfo}>
                                 <span style={styles.nombre}>{p.nombre}</span>
                                 <span style={styles.detalle}>{p.organizacion} · {p.carnet_upv ? 'UPV' : p.dni}</span>
                             </div>
-                            <button
-                                style={{ ...styles.btnToggle, backgroundColor: p.activo ? '#fee2e2' : '#d1fae5', color: p.activo ? '#991b1b' : '#065f46' }}
-                                onClick={() => toggleActivo('personas', p.id, p.activo)}
-                            >
-                                {p.activo ? 'Desactivar' : 'Activar'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                    style={styles.btnAccion}
+                                    onClick={() => {
+                                        setPersonaEditando(p)
+                                        setEditPersonaNombre(p.nombre)
+                                        setEditPersonaDni(p.dni || '')
+                                        setEditPersonaCarnetUpv(p.carnet_upv)
+                                        setEditPersonaOrgId(p.organizacion_id)
+                                        setErrorEditarPersona('')
+                                    }}
+                                >
+                                    Modificar
+                                </button>
+                                <button
+                                    style={{ ...styles.btnToggle, backgroundColor: p.activo ? '#fee2e2' : '#d1fae5', color: p.activo ? '#991b1b' : '#065f46' }}
+                                    onClick={() => toggleActivo('personas', p.id, p.activo)}
+                                >
+                                    {p.activo ? 'Desactivar' : 'Activar'}
+                                </button>
+                                <button
+                                    style={{ ...styles.btnToggle, backgroundColor: '#fee2e2', color: '#991b1b' }}
+                                    onClick={() => eliminarPersona(p.id)}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -123,15 +300,44 @@ export default function PanelAdmin({ onVolver }) {
 
             {!loading && seccion === 'organizaciones' && (
                 <div style={styles.lista}>
+                    {orgEditando && (
+                        <div style={styles.formulario}>
+                            <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Modificar organización</h3>
+                            <label style={styles.label}>Nombre *</label>
+                            <input style={styles.input} value={editOrgNombre} onChange={e => setEditOrgNombre(e.target.value)} />
+                            {errorEditarOrg && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorEditarOrg}</p>}
+                            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                <button style={styles.btnCancelar} onClick={() => setOrgEditando(null)}>Cancelar</button>
+                                <button style={styles.btnGuardar} onClick={guardarOrganizacion} disabled={loadingEditarOrg}>
+                                    {loadingEditarOrg ? 'Guardando...' : 'Guardar cambios'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {organizaciones.map(o => (
                         <div key={o.id} style={{ ...styles.card, opacity: o.activo ? 1 : 0.5 }}>
                             <span style={styles.nombre}>{o.nombre}</span>
-                            <button
-                                style={{ ...styles.btnToggle, backgroundColor: o.activo ? '#fee2e2' : '#d1fae5', color: o.activo ? '#991b1b' : '#065f46' }}
-                                onClick={() => toggleActivo('organizaciones', o.id, o.activo)}
-                            >
-                                {o.activo ? 'Desactivar' : 'Activar'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                    style={styles.btnAccion}
+                                    onClick={() => { setOrgEditando(o); setEditOrgNombre(o.nombre); setErrorEditarOrg('') }}
+                                >
+                                    Modificar
+                                </button>
+                                <button
+                                    style={{ ...styles.btnToggle, backgroundColor: o.activo ? '#fee2e2' : '#d1fae5', color: o.activo ? '#991b1b' : '#065f46' }}
+                                    onClick={() => toggleActivo('organizaciones', o.id, o.activo)}
+                                >
+                                    {o.activo ? 'Desactivar' : 'Activar'}
+                                </button>
+                                <button
+                                    style={{ ...styles.btnToggle, backgroundColor: '#fee2e2', color: '#991b1b' }}
+                                    onClick={() => eliminarOrganizacion(o.id)}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -168,19 +374,59 @@ export default function PanelAdmin({ onVolver }) {
                             </div>
                         </div>
                     )}
+
+                    {operadorEditando && (
+                        <div style={styles.formulario}>
+                            <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Modificar operador</h3>
+                            <label style={styles.label}>Nombre *</label>
+                            <input style={styles.input} value={editNombre} onChange={e => setEditNombre(e.target.value)} />
+                            <label style={styles.label}>Email *</label>
+                            <input style={styles.input} type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
+                            <label style={styles.label}>Rol</label>
+                            <select style={styles.input} value={editRol} onChange={e => setEditRol(e.target.value)}>
+                                <option value="operador">Operador</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <label style={styles.label}>Nueva contraseña (dejar vacío para no cambiar)</label>
+                            <input style={styles.input} type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="Nueva contraseña" />
+                            {errorEditar && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorEditar}</p>}
+                            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                <button style={styles.btnCancelar} onClick={() => setOperadorEditando(null)}>Cancelar</button>
+                                <button style={styles.btnGuardar} onClick={guardarOperador} disabled={loadingEditar}>
+                                    {loadingEditar ? 'Guardando...' : 'Guardar cambios'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {operadores.map(o => (
                         <div key={o.id} style={{ ...styles.card, opacity: o.activo ? 1 : 0.5 }}>
                             <div style={styles.cardInfo}>
                                 <span style={styles.nombre}>{o.nombre}</span>
                                 <span style={styles.detalle}>{o.email} · {o.rol}</span>
                             </div>
-                            <button
-                                style={{ ...styles.btnToggle, backgroundColor: o.activo ? '#fee2e2' : '#d1fae5', color: o.activo ? '#991b1b' : '#065f46' }}
-                                onClick={() => toggleActivo('operadores', o.id, o.activo)}
-                                disabled={o.id === miId}
-                            >
-                                {o.activo ? 'Desactivar' : 'Activar'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                    style={styles.btnAccion}
+                                    onClick={() => { setOperadorEditando(o); setEditNombre(o.nombre); setEditEmail(o.email); setEditRol(o.rol); setEditPassword(''); setErrorEditar('') }}
+                                >
+                                    Modificar
+                                </button>
+                                <button
+                                    style={{ ...styles.btnToggle, backgroundColor: o.activo ? '#fee2e2' : '#d1fae5', color: o.activo ? '#991b1b' : '#065f46', opacity: o.id === miId ? 0.4 : 1 }}
+                                    onClick={() => toggleActivo('operadores', o.id, o.activo)}
+                                    disabled={o.id === miId}
+                                >
+                                    {o.activo ? 'Desactivar' : 'Activar'}
+                                </button>
+                                <button
+                                    style={{ ...styles.btnToggle, backgroundColor: '#fee2e2', color: '#991b1b', opacity: o.id === miId ? 0.4 : 1 }}
+                                    onClick={() => eliminarOperador(o.id)}
+                                    disabled={o.id === miId}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -210,4 +456,8 @@ const styles = {
     input: { width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', boxSizing: 'border-box', marginBottom: '1rem' },
     btnCancelar: { flex: 1, padding: '0.75rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
     btnGuardar: { flex: 1, padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' },
+    btnAccion: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111', fontSize: '0.875rem' },
+    toggle: { display: 'flex', gap: '0.5rem', marginBottom: '1rem' },
+    toggleBtn: { flex: 1, padding: '0.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', fontSize: '0.875rem', color: '#111' },
+    toggleActivo: { backgroundColor: '#2563eb', color: 'white', border: '1px solid #2563eb' },
 }
