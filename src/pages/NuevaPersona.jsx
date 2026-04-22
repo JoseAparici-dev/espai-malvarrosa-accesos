@@ -88,7 +88,7 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
       <div style={styles.modal}>
         <h2 style={styles.titulo}>Nueva persona</h2>
 
-        <label style={styles.label}>Nombre y apellidos *</label>
+        <label style={styles.label}>Apellidos, Nombre *</label>
         <div style={{ position: 'relative', marginBottom: '1rem' }}>
           <input
             style={{ ...styles.input, margin: 0 }}
