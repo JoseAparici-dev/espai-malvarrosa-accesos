@@ -39,6 +39,11 @@ export default function PanelAdmin({ onVolver }) {
     const [editNombreLocal, setEditNombreLocal] = useState('')
     const [loadingConfig, setLoadingConfig] = useState(false)
     const [okConfig, setOkConfig] = useState(false)
+    const [mostrarNuevaOrg, setMostrarNuevaOrg] = useState(false)
+    const [nuevaOrgNombre, setNuevaOrgNombre] = useState('')
+    const [nuevaOrgTipo, setNuevaOrgTipo] = useState('upv')
+    const [errorNuevaOrg, setErrorNuevaOrg] = useState('')
+    const [loadingNuevaOrg, setLoadingNuevaOrg] = useState(false)
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => setMiId(user.id))
@@ -238,6 +243,27 @@ export default function PanelAdmin({ onVolver }) {
         setOkConfig(true)
         setLoadingConfig(false)
     }
+
+    async function crearOrganizacion() {
+        setErrorNuevaOrg('')
+        if (!nuevaOrgNombre.trim()) return setErrorNuevaOrg('El nombre es obligatorio')
+
+        setLoadingNuevaOrg(true)
+        const { error } = await supabase
+            .from('organizaciones')
+            .insert({ nombre: nuevaOrgNombre.trim(), tipo: nuevaOrgTipo })
+
+        if (error) {
+            setErrorNuevaOrg(error.message.includes('unique') ? 'Ya existe una organización con ese nombre' : 'Error al crear')
+        } else {
+            setMostrarNuevaOrg(false)
+            setNuevaOrgNombre('')
+            setNuevaOrgTipo('upv')
+            cargarOrganizaciones()
+        }
+        setLoadingNuevaOrg(false)
+    }
+
     return (
         <div style={styles.container}>
             <div style={styles.header}>
@@ -326,6 +352,31 @@ export default function PanelAdmin({ onVolver }) {
 
             {!loading && seccion === 'organizaciones' && (
                 <div style={styles.lista}>
+                    <div style={{ marginBottom: '1rem' }}>
+                        <button style={styles.btnNuevo} onClick={() => setMostrarNuevaOrg(!mostrarNuevaOrg)}>
+                            + Nueva organización
+                        </button>
+                    </div>
+
+                    {mostrarNuevaOrg && (
+                        <div style={styles.formulario}>
+                            <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Nueva organización</h3>
+                            <label style={styles.label}>Nombre *</label>
+                            <input style={styles.input} value={nuevaOrgNombre} onChange={e => setNuevaOrgNombre(e.target.value)} placeholder="Nombre de la organización" />
+                            <label style={styles.label}>Tipo</label>
+                            <select style={styles.input} value={nuevaOrgTipo} onChange={e => setNuevaOrgTipo(e.target.value)}>
+                                <option value="upv">🏛️ UPV</option>
+                                <option value="externa">🏢 Externa</option>
+                            </select>
+                            {errorNuevaOrg && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorNuevaOrg}</p>}
+                            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                <button style={styles.btnCancelar} onClick={() => setMostrarNuevaOrg(false)}>Cancelar</button>
+                                <button style={styles.btnGuardar} onClick={crearOrganizacion} disabled={loadingNuevaOrg}>
+                                    {loadingNuevaOrg ? 'Creando...' : 'Crear organización'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     {orgEditando && (
                         <div style={styles.formulario}>
                             <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Modificar organización</h3>

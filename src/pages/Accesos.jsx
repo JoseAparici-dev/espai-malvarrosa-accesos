@@ -9,6 +9,7 @@ export default function Accesos() {
   const [busqueda, setBusqueda] = useState('')
   const [personas, setPersonas] = useState([])
   const [aforo, setAforo] = useState(0)
+  const [aforoMaximo, setAforoMaximo] = useState(0)
   const [loading, setLoading] = useState(false)
   const [mostrarNueva, setMostrarNueva] = useState(false)
   const [mostrarRegistro, setMostrarRegistro] = useState(false)
@@ -18,6 +19,10 @@ export default function Accesos() {
 
   useEffect(() => {
     cargarAforo()
+    supabase.from('configuracion').select('aforo_maximo').eq('id', 1).single()
+      .then(({ data }) => {
+        setAforoMaximo(data?.aforo_maximo ?? 0)
+      })
     supabase.auth.getUser().then(({ data: { user } }) => {
       supabase
         .from('operadores')
@@ -95,6 +100,12 @@ export default function Accesos() {
           <button style={styles.btnIcono} onClick={cerrarSesion} title="Salir">🚪</button>
         </div>
       </div>
+
+      {aforoMaximo > 0 && aforo >= aforoMaximo && (
+        <div style={styles.alerta}>
+          ⚠️ Aforo máximo alcanzado ({aforo}/{aforoMaximo}) — se pueden seguir registrando entradas
+        </div>
+      )}
 
       <div style={styles.buscadorBox}>
         <input
@@ -187,4 +198,5 @@ const styles = {
   btnAdmin: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
   btnHistorial: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
   btnIcono: { padding: '0.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', fontSize: '1.1rem' },
+  alerta: { backgroundColor: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '10px', padding: '0.875rem 1rem', marginBottom: '1rem', color: '#92400e', fontWeight: '600', textAlign: 'center' },
 }

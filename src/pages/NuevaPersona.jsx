@@ -30,6 +30,7 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOrgId('')
     setModoNuevaOrg(false)
   }, [carnetUpv])
