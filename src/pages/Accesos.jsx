@@ -3,6 +3,7 @@ import { supabase } from '../supabase'
 import NuevaPersona from './NuevaPersona'
 import RegistroDiario from './RegistroDiario'
 import PanelAdmin from './PanelAdmin'
+import Historial from './Historial'
 
 export default function Accesos() {
   const [busqueda, setBusqueda] = useState('')
@@ -13,6 +14,7 @@ export default function Accesos() {
   const [mostrarRegistro, setMostrarRegistro] = useState(false)
   const [esAdmin, setEsAdmin] = useState(false)
   const [mostrarAdmin, setMostrarAdmin] = useState(false)
+  const [mostrarHistorial, setMostrarHistorial] = useState(false)
 
   useEffect(() => {
     cargarAforo()
@@ -71,6 +73,7 @@ export default function Accesos() {
 
   if (mostrarRegistro) return <RegistroDiario onVolver={() => setMostrarRegistro(false)} />
   if (mostrarAdmin) return <PanelAdmin onVolver={() => setMostrarAdmin(false)} />
+  if (mostrarHistorial) return <Historial onVolver={() => setMostrarHistorial(false)} />
 
   return (
     <div style={styles.container}>
@@ -79,16 +82,17 @@ export default function Accesos() {
           <h1 style={styles.titulo}>Espai Malvarrosa</h1>
           <p style={styles.subtitulo}>Control d'accessos</p>
         </div>
-        <div style={styles.aforoBox}>
-          <span style={styles.aforoNum}>{aforo}</span>
-          <span style={styles.aforoLabel}>Dins ara</span>
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button style={styles.btnRegistro} onClick={() => setMostrarRegistro(true)}>📋 Registro</button>
-          <button style={styles.btnSalir} onClick={cerrarSesion}>Salir</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={styles.aforoBox}>
+            <span style={styles.aforoNum}>{aforo}</span>
+            <span style={styles.aforoLabel}>Dins ara</span>
+          </div>
+          <button style={styles.btnIcono} onClick={() => setMostrarHistorial(true)} title="Historial">📅</button>
+          <button style={styles.btnIcono} onClick={() => setMostrarRegistro(true)} title="Registro diario">📋</button>
           {esAdmin && (
-            <button style={styles.btnAdmin} onClick={() => setMostrarAdmin(true)}>⚙️ Admin</button>
+            <button style={styles.btnIcono} onClick={() => setMostrarAdmin(true)} title="Administración">⚙️</button>
           )}
+          <button style={styles.btnIcono} onClick={cerrarSesion} title="Salir">🚪</button>
         </div>
       </div>
 
@@ -161,7 +165,7 @@ export default function Accesos() {
 const styles = {
   container: { maxWidth: '600px', margin: '0 auto', padding: '1rem' },
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', gap: '1rem' },
-  titulo: { fontSize: '1.25rem', fontWeight: 'bold', margin: 0 },
+  titulo: { fontSize: '1.25rem', fontWeight: 'bold', margin: '0 0 0.25rem', color: 'white' },
   subtitulo: { fontSize: '0.875rem', color: '#666', margin: 0 },
   aforoBox: { textAlign: 'center', minWidth: '60px' },
   aforoNum: { display: 'block', fontSize: '2rem', fontWeight: 'bold', color: '#2563eb' },
@@ -181,4 +185,6 @@ const styles = {
   btnNueva: { padding: '0.75rem 1.5rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' },
   btnRegistro: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
   btnAdmin: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
+  btnHistorial: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
+  btnIcono: { padding: '0.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', fontSize: '1.1rem' },
 }
