@@ -44,6 +44,17 @@ export default function PanelAdmin({ onVolver }) {
     const [nuevaOrgTipo, setNuevaOrgTipo] = useState('upv')
     const [errorNuevaOrg, setErrorNuevaOrg] = useState('')
     const [loadingNuevaOrg, setLoadingNuevaOrg] = useState(false)
+    const [mostrarRegistroManual, setMostrarRegistroManual] = useState(false)
+    const [rmPersonaId, setRmPersonaId] = useState('')
+    const [rmPersonaNombre, setRmPersonaNombre] = useState('')
+    const [rmBusqueda, setRmBusqueda] = useState('')
+    const [rmSugerencias, setRmSugerencias] = useState([])
+    const [rmFecha, setRmFecha] = useState(new Date().toISOString().split('T')[0])
+    const [rmHora, setRmHora] = useState(new Date().toTimeString().slice(0, 5))
+    const [rmTipo, setRmTipo] = useState('entrada')
+    const [errorRm, setErrorRm] = useState('')
+    const [loadingRm, setLoadingRm] = useState(false)
+    const [okRm, setOkRm] = useState(false)
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => setMiId(user.id))
@@ -283,6 +294,44 @@ export default function PanelAdmin({ onVolver }) {
         setLoadingNuevaOrg(false)
     }
 
+    async function buscarPersonasRm(texto) {
+        setRmBusqueda(texto)
+        setRmPersonaId('')
+        setRmPersonaNombre('')
+        if (texto.length < 2) { setRmSugerencias([]); return }
+        const { data } = await supabase
+            .from('personas_con_estado')
+            .select('id, nombre, organizacion')
+            .ilike('nombre', `%${texto}%`)
+            .eq('activo', true)
+            .limit(6)
+        setRmSugerencias(data ?? [])
+    }
+
+    async function guardarRegistroManual() {
+        setErrorRm('')
+        setOkRm(false)
+        if (!rmPersonaId) return setErrorRm('Selecciona una persona')
+
+        setLoadingRm(true)
+        const timestamp = new Date(`${rmFecha}T${rmHora}:00`).toISOString()
+
+        const { error } = await supabase
+            .from('registros_acceso')
+            .insert({ persona_id: rmPersonaId, tipo: rmTipo, timestamp })
+
+        if (error) {
+            setErrorRm('Error al guardar: ' + error.message)
+        } else {
+            setOkRm(true)
+            setRmPersonaId('')
+            setRmPersonaNombre('')
+            setRmBusqueda('')
+            setRmSugerencias([])
+        }
+        setLoadingRm(false)
+    }
+
     return (
         <div style={styles.container}>
             <div style={styles.header}>
@@ -295,6 +344,7 @@ export default function PanelAdmin({ onVolver }) {
                 <button style={{ ...styles.tab, ...(seccion === 'organizaciones' ? styles.tabActivo : {}) }} onClick={() => setSeccion('organizaciones')}>Organizaciones</button>
                 <button style={{ ...styles.tab, ...(seccion === 'operadores' ? styles.tabActivo : {}) }} onClick={() => setSeccion('operadores')}>Operadores</button>
                 <button style={{ ...styles.tab, ...(seccion === 'configuracion' ? styles.tabActivo : {}) }} onClick={() => setSeccion('configuracion')}>⚙️ Config</button>
+                <button style={{ ...styles.tab, ...(seccion === 'registros' ? styles.tabActivo : {}) }} onClick={() => setSeccion('registros')}>📝 Registros</button>
             </div>
 
             {loading && <p style={styles.info}>Cargando...</p>}
@@ -542,6 +592,56 @@ export default function PanelAdmin({ onVolver }) {
                     {okConfig && <p style={{ color: '#16a34a', fontSize: '0.875rem', marginBottom: '0.5rem' }}>✅ Guardado correctamente</p>}
                     <button style={styles.btnGuardar} onClick={guardarConfig} disabled={loadingConfig}>
                         {loadingConfig ? 'Guardando...' : 'Guardar configuración'}
+                    </button>
+                </div>
+            )}
+            {!loading && seccion === 'registros' && (
+                <div style={styles.formulario}>
+                    <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Registro manual de acceso</h3>
+
+                    <label style={styles.label}>Persona *</label>
+                    <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                        <input
+                            style={{ ...styles.input, margin: 0 }}
+                            value={rmPersonaId ? rmPersonaNombre : rmBusqueda}
+                            onChange={e => buscarPersonasRm(e.target.value)}
+                            placeholder="Buscar por nombre..."
+                            readOnly={!!rmPersonaId}
+                        />
+                        {rmSugerencias.length > 0 && !rmPersonaId && (
+                            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 200 }}>
+                                {rmSugerencias.map(p => (
+                                    <div key={p.id} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}
+                                        onClick={() => { setRmPersonaId(p.id); setRmPersonaNombre(p.nombre); setRmSugerencias([]) }}>
+                                        <strong>{p.nombre}</strong> — {p.organizacion}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {rmPersonaId && (
+                        <button style={{ ...styles.btnCancelar, marginBottom: '1rem', fontSize: '0.8rem' }} onClick={() => { setRmPersonaId(''); setRmPersonaNombre(''); setRmBusqueda('') }}>
+                            ✕ Cambiar persona
+                        </button>
+                    )}
+
+                    <label style={styles.label}>Tipo</label>
+                    <select style={styles.input} value={rmTipo} onChange={e => setRmTipo(e.target.value)}>
+                        <option value="entrada">Entrada</option>
+                        <option value="salida">Salida</option>
+                    </select>
+
+                    <label style={styles.label}>Fecha</label>
+                    <input style={styles.input} type="date" value={rmFecha} onChange={e => setRmFecha(e.target.value)} />
+
+                    <label style={styles.label}>Hora</label>
+                    <input style={styles.input} type="time" value={rmHora} onChange={e => setRmHora(e.target.value)} />
+
+                    {errorRm && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorRm}</p>}
+                    {okRm && <p style={{ color: '#16a34a', fontSize: '0.875rem' }}>✅ Registro guardado correctamente</p>}
+
+                    <button style={styles.btnGuardar} onClick={guardarRegistroManual} disabled={loadingRm}>
+                        {loadingRm ? 'Guardando...' : 'Guardar registro'}
                     </button>
                 </div>
             )}
