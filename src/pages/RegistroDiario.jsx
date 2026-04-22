@@ -6,6 +6,7 @@ export default function RegistroDiario({ onVolver }) {
     const [fecha, setFecha] = useState(hoy)
     const [registros, setRegistros] = useState([])
     const [loading, setLoading] = useState(false)
+    const [filtroTipo, setFiltroTipo] = useState('entrada')
 
     async function cargarRegistros() {
         setLoading(true)
@@ -25,7 +26,7 @@ export default function RegistroDiario({ onVolver }) {
       `)
             .gte('timestamp', desde)
             .lte('timestamp', hasta)
-            .eq('tipo', 'entrada')
+            .in('tipo', filtroTipo === 'ambos' ? ['entrada', 'salida'] : [filtroTipo])
             .order('timestamp', { ascending: true })
 
         setRegistros(data ?? [])
@@ -36,7 +37,7 @@ export default function RegistroDiario({ onVolver }) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         cargarRegistros()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fecha])
+    }, [fecha, filtroTipo])
 
     function formatearHora(timestamp) {
         return new Date(timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
@@ -61,7 +62,11 @@ export default function RegistroDiario({ onVolver }) {
             <div style={styles.documento}>
                 <h2 style={styles.titulo}>Registro de entrada de personas en Espai Malvarrosa (Mañanas)</h2>
                 <p style={styles.fechaDoc}>{formatearFecha(fecha)}</p>
-
+                <div style={styles.filtroTipoBox}>
+                    <button style={{ ...styles.btnTipo, ...(filtroTipo === 'entrada' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('entrada')}>Solo entradas</button>
+                    <button style={{ ...styles.btnTipo, ...(filtroTipo === 'salida' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('salida')}>Solo salidas</button>
+                    <button style={{ ...styles.btnTipo, ...(filtroTipo === 'ambos' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('ambos')}>Ambos</button>
+                </div>
                 {loading && <p style={styles.info}>Cargando...</p>}
 
                 {!loading && (
@@ -69,7 +74,7 @@ export default function RegistroDiario({ onVolver }) {
                         <thead>
                             <tr>
                                 <th style={styles.th}>Hora</th>
-                                <th style={styles.th}>DNI / Carnet UPV</th>
+                                <th style={styles.th}>{filtroTipo === 'ambos' ? 'Tipo' : 'DNI / UPV'}</th>
                                 <th style={styles.th}>Nombre y Apellidos</th>
                                 <th style={styles.th}>Empresa o Entidad Organizativa</th>
                             </tr>
@@ -85,7 +90,7 @@ export default function RegistroDiario({ onVolver }) {
                                 registros.map((r, i) => (
                                     <tr key={i} style={i % 2 === 0 ? {} : { backgroundColor: '#f9f9f9' }}>
                                         <td style={styles.td}>{formatearHora(r.timestamp)}</td>
-                                        <td style={styles.td}>{r.personas.carnet_upv ? 'UPV' : r.personas.dni}</td>
+                                        <td style={styles.td}>{filtroTipo === 'ambos' ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1) : (r.personas.carnet_upv ? 'UPV' : r.personas.dni)}</td>
                                         <td style={styles.td}>{r.personas.nombre}</td>
                                         <td style={styles.td}>{r.personas.organizaciones?.nombre}</td>
                                     </tr>
@@ -116,4 +121,7 @@ const styles = {
     th: { border: '1px solid #ccc', padding: '0.6rem 0.75rem', backgroundColor: '#f0f4f8', textAlign: 'left', fontSize: '0.875rem', fontWeight: 'bold' },
     td: { border: '1px solid #ccc', padding: '0.6rem 0.75rem', fontSize: '0.875rem' },
     total: { marginTop: '1rem', textAlign: 'right', fontSize: '0.9rem', color: '#444' },
+    filtroTipoBox: { display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' },
+    btnTipo: { flex: 1, padding: '0.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111', fontSize: '0.875rem' },
+    btnTipoActivo: { backgroundColor: '#2563eb', color: 'white', border: '1px solid #2563eb', fontWeight: 'bold' },
 }
