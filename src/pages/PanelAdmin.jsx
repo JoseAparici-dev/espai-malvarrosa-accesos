@@ -33,12 +33,19 @@ export default function PanelAdmin({ onVolver }) {
     const [editOrgNombre, setEditOrgNombre] = useState('')
     const [errorEditarOrg, setErrorEditarOrg] = useState('')
     const [loadingEditarOrg, setLoadingEditarOrg] = useState(false)
+    const [editOrgTipo, setEditOrgTipo] = useState('externa')
+    const [config, setConfig] = useState(null)
+    const [editAforo, setEditAforo] = useState(0)
+    const [editNombreLocal, setEditNombreLocal] = useState('')
+    const [loadingConfig, setLoadingConfig] = useState(false)
+    const [okConfig, setOkConfig] = useState(false)
 
     useEffect(() => {
         supabase.auth.getUser().then(({ data: { user } }) => setMiId(user.id))
         if (seccion === 'personas') cargarPersonas()
         if (seccion === 'organizaciones') cargarOrganizaciones()
         if (seccion === 'operadores') cargarOperadores()
+        if (seccion === 'configuracion') cargarConfig()
     }, [seccion])
 
     async function cargarPersonas() {
@@ -189,7 +196,7 @@ export default function PanelAdmin({ onVolver }) {
         setLoadingEditarOrg(true)
         const { error } = await supabase
             .from('organizaciones')
-            .update({ nombre: editOrgNombre.trim() })
+            .update({ nombre: editOrgNombre.trim(), tipo: editOrgTipo })
             .eq('id', orgEditando.id)
 
         if (error) {
@@ -213,6 +220,24 @@ export default function PanelAdmin({ onVolver }) {
         }
     }
 
+    async function cargarConfig() {
+        const { data } = await supabase.from('configuracion').select('*').single()
+        setConfig(data)
+        setEditAforo(data?.aforo_maximo ?? 0)
+        setEditNombreLocal(data?.nombre_local ?? '')
+    }
+
+    async function guardarConfig() {
+        setLoadingConfig(true)
+        setOkConfig(false)
+        await supabase.from('configuracion').update({
+            aforo_maximo: editAforo,
+            nombre_local: editNombreLocal,
+            updated_at: new Date().toISOString()
+        }).eq('id', 1)
+        setOkConfig(true)
+        setLoadingConfig(false)
+    }
     return (
         <div style={styles.container}>
             <div style={styles.header}>
@@ -224,6 +249,7 @@ export default function PanelAdmin({ onVolver }) {
                 <button style={{ ...styles.tab, ...(seccion === 'personas' ? styles.tabActivo : {}) }} onClick={() => setSeccion('personas')}>Personas</button>
                 <button style={{ ...styles.tab, ...(seccion === 'organizaciones' ? styles.tabActivo : {}) }} onClick={() => setSeccion('organizaciones')}>Organizaciones</button>
                 <button style={{ ...styles.tab, ...(seccion === 'operadores' ? styles.tabActivo : {}) }} onClick={() => setSeccion('operadores')}>Operadores</button>
+                <button style={{ ...styles.tab, ...(seccion === 'configuracion' ? styles.tabActivo : {}) }} onClick={() => setSeccion('configuracion')}>⚙️ Config</button>
             </div>
 
             {loading && <p style={styles.info}>Cargando...</p>}
@@ -305,6 +331,11 @@ export default function PanelAdmin({ onVolver }) {
                             <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Modificar organización</h3>
                             <label style={styles.label}>Nombre *</label>
                             <input style={styles.input} value={editOrgNombre} onChange={e => setEditOrgNombre(e.target.value)} />
+                            <label style={styles.label}>Tipo</label>
+                            <select style={styles.input} value={editOrgTipo} onChange={e => setEditOrgTipo(e.target.value)}>
+                                <option value="externa">Externa</option>
+                                <option value="upv">UPV</option>
+                            </select>
                             {errorEditarOrg && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorEditarOrg}</p>}
                             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                                 <button style={styles.btnCancelar} onClick={() => setOrgEditando(null)}>Cancelar</button>
@@ -318,10 +349,11 @@ export default function PanelAdmin({ onVolver }) {
                     {organizaciones.map(o => (
                         <div key={o.id} style={{ ...styles.card, opacity: o.activo ? 1 : 0.5 }}>
                             <span style={styles.nombre}>{o.nombre}</span>
+                            <span style={styles.detalle}>{o.tipo === 'upv' ? '🏛️ UPV' : '🏢 Externa'}</span>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
                                     style={styles.btnAccion}
-                                    onClick={() => { setOrgEditando(o); setEditOrgNombre(o.nombre); setErrorEditarOrg('') }}
+                                    onClick={() => { setOrgEditando(o); setEditOrgNombre(o.nombre); setEditOrgTipo(o.tipo); setErrorEditarOrg('') }}
                                 >
                                     Modificar
                                 </button>
@@ -403,7 +435,6 @@ export default function PanelAdmin({ onVolver }) {
                         <div key={o.id} style={{ ...styles.card, opacity: o.activo ? 1 : 0.5 }}>
                             <div style={styles.cardInfo}>
                                 <span style={styles.nombre}>{o.nombre}</span>
-                                <span style={styles.detalle}>{o.email} · {o.rol}</span>
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
@@ -429,6 +460,19 @@ export default function PanelAdmin({ onVolver }) {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+            {!loading && seccion === 'configuracion' && (
+                <div style={styles.formulario}>
+                    <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Configuración del local</h3>
+                    <label style={styles.label}>Nombre del local</label>
+                    <input style={styles.input} value={editNombreLocal} onChange={e => setEditNombreLocal(e.target.value)} />
+                    <label style={styles.label}>Aforo máximo (0 = sin límite)</label>
+                    <input style={styles.input} type="number" min="0" value={editAforo} onChange={e => setEditAforo(parseInt(e.target.value) || 0)} />
+                    {okConfig && <p style={{ color: '#16a34a', fontSize: '0.875rem', marginBottom: '0.5rem' }}>✅ Guardado correctamente</p>}
+                    <button style={styles.btnGuardar} onClick={guardarConfig} disabled={loadingConfig}>
+                        {loadingConfig ? 'Guardando...' : 'Guardar configuración'}
+                    </button>
                 </div>
             )}
         </div>

@@ -25,9 +25,14 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
     setSugerencias(data ?? [])
   }
   useEffect(() => {
-    supabase.from('organizaciones').select('id, nombre').eq('activo', true).order('nombre')
+    supabase.from('organizaciones').select('id, nombre, tipo').eq('activo', true).order('nombre')
       .then(({ data }) => setOrganizaciones(data ?? []))
   }, [])
+
+  useEffect(() => {
+    setOrgId('')
+    setModoNuevaOrg(false)
+  }, [carnetUpv])
 
   function normalizar(texto) {
     return texto
@@ -130,13 +135,21 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
 
         <label style={styles.label}>Organización *</label>
         {!modoNuevaOrg ? (
-          <select style={styles.input} value={orgId} onChange={e => {
+          < select style={styles.input} value={orgId} onChange={e => {
             if (e.target.value === '__nueva__') { setModoNuevaOrg(true); setOrgId('') }
             else setOrgId(e.target.value)
           }}>
             <option value="">Selecciona...</option>
-            {organizaciones.map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
-            <option value="__nueva__">+ Nueva organización</option>
+            {organizaciones
+              .filter(o => carnetUpv ? o.tipo === 'upv' : o.tipo === 'externa')
+              .sort((a, b) => a.nombre.localeCompare(b.nombre))
+              .map(o => (
+                <option key={o.id} value={o.id}>
+                  {carnetUpv ? '🏛️ ' : '🏢 '}{o.nombre}
+                </option>
+              ))
+            }
+            {!carnetUpv && <option value="__nueva__">+ Nueva organización</option>}
           </select>
         ) : (
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -154,7 +167,7 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
           </button>
         </div>
       </div>
-    </div>
+    </div >
   )
 }
 
