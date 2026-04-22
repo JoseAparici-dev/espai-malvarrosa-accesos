@@ -84,9 +84,28 @@ export default function PanelAdmin({ onVolver }) {
     }
 
     async function toggleActivo(tabla, id, activo) {
+        if (tabla === 'organizaciones' && activo) {
+            const { data: personas } = await supabase
+                .from('personas')
+                .select('id, nombre')
+                .eq('organizacion_id', id)
+                .eq('activo', true)
+
+            if (personas && personas.length > 0) {
+                const opcion = window.confirm(
+                    `Esta organización tiene ${personas.length} persona(s) activa(s) asociada(s).\n\n` +
+                    `Pulsa Aceptar para DESACTIVARLAS también.\n` +
+                    `Pulsa Cancelar para CANCELAR la operación.`
+                )
+                if (!opcion) return
+
+                await supabase.from('personas').update({ activo: false }).eq('organizacion_id', id)
+            }
+        }
+
         await supabase.from(tabla).update({ activo: !activo }).eq('id', id)
         if (tabla === 'personas') cargarPersonas()
-        if (tabla === 'organizaciones') cargarOrganizaciones()
+        if (tabla === 'organizaciones') { cargarOrganizaciones(); cargarPersonas() }
         if (tabla === 'operadores') cargarOperadores()
     }
 
