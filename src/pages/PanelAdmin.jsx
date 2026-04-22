@@ -514,8 +514,9 @@ export default function PanelAdmin({ onVolver }) {
                             <input style={styles.input} type="password" value={nuevoPassword} onChange={e => setNuevoPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
                             <label style={styles.label}>Rol</label>
                             <select style={styles.input} value={nuevoRol} onChange={e => setNuevoRol(e.target.value)}>
-                                <option value="operador">Operador</option>
-                                <option value="admin">Admin</option>
+                                <option value="operador">👤 Operador</option>
+                                <option value="visualizador">👁️ Visualizador</option>
+                                <option value="admin">🔑 Admin</option>
                             </select>
                             {errorOperador && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorOperador}</p>}
                             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -536,8 +537,9 @@ export default function PanelAdmin({ onVolver }) {
                             <input style={styles.input} type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
                             <label style={styles.label}>Rol</label>
                             <select style={styles.input} value={editRol} onChange={e => setEditRol(e.target.value)}>
-                                <option value="operador">Operador</option>
-                                <option value="admin">Admin</option>
+                                <option value="operador">👤 Operador</option>
+                                <option value="visualizador">👁️ Visualizador</option>
+                                <option value="admin">🔑 Admin</option>
                             </select>
                             <label style={styles.label}>Nueva contraseña (dejar vacío para no cambiar)</label>
                             <input style={styles.input} type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="Nueva contraseña" />
@@ -555,6 +557,7 @@ export default function PanelAdmin({ onVolver }) {
                         <div key={o.id} style={{ ...styles.card, opacity: o.activo ? 1 : 0.5 }}>
                             <div style={styles.cardInfo}>
                                 <span style={styles.nombre}>{o.nombre}</span>
+                                <span style={styles.detalle}>{o.email} · <b>{o.rol === 'admin' ? '🔑 Admin' : o.rol === 'visualizador' ? '👁️ Visualizador' : '👤 Operador'}</b></span>
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
