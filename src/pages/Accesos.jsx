@@ -4,6 +4,7 @@ import NuevaPersona from './NuevaPersona'
 import RegistroDiario from './RegistroDiario'
 import PanelAdmin from './PanelAdmin'
 import Historial from './Historial'
+import VisualizadorAccesos from './VisualizadorAccesos'
 
 export default function Accesos() {
   const [busqueda, setBusqueda] = useState('')
@@ -14,6 +15,7 @@ export default function Accesos() {
   const [mostrarNueva, setMostrarNueva] = useState(false)
   const [mostrarRegistro, setMostrarRegistro] = useState(false)
   const [esAdmin, setEsAdmin] = useState(false)
+  const [rol, setRol] = useState('')
   const [mostrarAdmin, setMostrarAdmin] = useState(false)
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
 
@@ -29,7 +31,10 @@ export default function Accesos() {
         .select('rol')
         .eq('id', user.id)
         .single()
-        .then(({ data }) => setEsAdmin(data?.rol === 'admin'))
+        .then(({ data }) => {
+          setEsAdmin(data?.rol === 'admin')
+          setRol(data?.rol ?? '')
+        })
     })
   }, [])
 
@@ -76,6 +81,7 @@ export default function Accesos() {
     await supabase.auth.signOut()
   }
 
+  if (rol === 'visualizador') return <VisualizadorAccesos onCerrarSesion={cerrarSesion} />
   if (mostrarRegistro) return <RegistroDiario onVolver={() => setMostrarRegistro(false)} />
   if (mostrarAdmin) return <PanelAdmin onVolver={() => setMostrarAdmin(false)} />
   if (mostrarHistorial) return <Historial onVolver={() => setMostrarHistorial(false)} />
