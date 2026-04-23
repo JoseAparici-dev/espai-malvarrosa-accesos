@@ -11,6 +11,7 @@ export default function Historial({ onVolver }) {
   const [registros, setRegistros] = useState([])
   const [loading, setLoading] = useState(false)
   const [buscado, setBuscado] = useState(false)
+  const [filtroTipo, setFiltroTipo] = useState('entrada')
 
   useEffect(() => {
     supabase.from('organizaciones').select('id, nombre').eq('activo', true).order('nombre')
@@ -33,7 +34,7 @@ export default function Historial({ onVolver }) {
           organizaciones ( nombre )
         )
       `)
-      .eq('tipo', 'entrada')
+      .in('tipo', filtroTipo === 'ambos' ? ['entrada', 'salida'] : [filtroTipo])
       .gte('timestamp', `${fechaDesde}T00:00:00`)
       .lte('timestamp', `${fechaHasta}T23:59:59`)
       .order('timestamp', { ascending: false })
@@ -98,6 +99,14 @@ export default function Historial({ onVolver }) {
             {organizaciones.map(o => <option key={o.id} value={o.nombre}>{o.nombre}</option>)}
           </select>
         </div>
+        <div style={styles.filtroGrupo}>
+          <label style={styles.label}>Tipo</label>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button style={{ ...styles.btnTipo, ...(filtroTipo === 'entrada' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('entrada')}>Entradas</button>
+            <button style={{ ...styles.btnTipo, ...(filtroTipo === 'salida' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('salida')}>Salidas</button>
+            <button style={{ ...styles.btnTipo, ...(filtroTipo === 'ambos' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('ambos')}>Ambos</button>
+          </div>
+        </div>
         <button style={styles.btnBuscar} onClick={buscar}>Buscar</button>
       </div>
 
@@ -110,7 +119,7 @@ export default function Historial({ onVolver }) {
               <tr>
                 <th style={styles.th}>Fecha</th>
                 <th style={styles.th}>Hora</th>
-                <th style={styles.th}>DNI / UPV</th>
+                <th style={styles.th}>{filtroTipo === 'ambos' ? 'Tipo' : 'DNI / UPV'}</th>
                 <th style={styles.th}>Nombre y Apellidos</th>
                 <th style={styles.th}>Organización</th>
               </tr>
@@ -127,7 +136,7 @@ export default function Historial({ onVolver }) {
                   <tr key={i} style={i % 2 === 0 ? {} : { backgroundColor: '#f9f9f9' }}>
                     <td style={styles.td}>{formatearFecha(r.timestamp)}</td>
                     <td style={styles.td}>{formatearHora(r.timestamp)}</td>
-                    <td style={styles.td}>{r.personas.carnet_upv ? 'UPV' : r.personas.dni}</td>
+                    <td style={styles.td}>{filtroTipo === 'ambos' ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1) : (r.personas.carnet_upv ? 'UPV' : r.personas.dni)}</td>
                     <td style={styles.td}>{r.personas.nombre}</td>
                     <td style={styles.td}>{r.personas.organizaciones?.nombre}</td>
                   </tr>
@@ -155,5 +164,6 @@ const styles = {
   input: { padding: '0.625rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.9rem' },
   btnBuscar: { padding: '0.625rem 1.5rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', alignSelf: 'flex-end' },
   info: { textAlign: 'center', color: '#666' },
-  documento: { backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },
+  documento: { backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },btnTipo: { padding: '0.5rem 0.75rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111', fontSize: '0.8rem' },
+btnTipoActivo: { backgroundColor: '#2563eb', color: 'white', border: '1px solid #2563eb', fontWeight: 'bold' },
 }
