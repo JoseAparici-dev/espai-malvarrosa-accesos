@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 
 export default function PanelAdmin({ onVolver }) {
+    const [passNueva, setPassNueva] = useState('')
+    const [passNueva2, setPassNueva2] = useState('')
+    const [errorPass, setErrorPass] = useState('')
+    const [okPass, setOkPass] = useState(false)
+    const [loadingPass, setLoadingPass] = useState(false)
     const [seccion, setSeccion] = useState('personas')
     const [personas, setPersonas] = useState([])
     const [organizaciones, setOrganizaciones] = useState([])
@@ -34,7 +39,6 @@ export default function PanelAdmin({ onVolver }) {
     const [errorEditarOrg, setErrorEditarOrg] = useState('')
     const [loadingEditarOrg, setLoadingEditarOrg] = useState(false)
     const [editOrgTipo, setEditOrgTipo] = useState('externa')
-    const [config, setConfig] = useState(null)
     const [editAforo, setEditAforo] = useState(0)
     const [editNombreLocal, setEditNombreLocal] = useState('')
     const [loadingConfig, setLoadingConfig] = useState(false)
@@ -44,7 +48,6 @@ export default function PanelAdmin({ onVolver }) {
     const [nuevaOrgTipo, setNuevaOrgTipo] = useState('upv')
     const [errorNuevaOrg, setErrorNuevaOrg] = useState('')
     const [loadingNuevaOrg, setLoadingNuevaOrg] = useState(false)
-    const [mostrarRegistroManual, setMostrarRegistroManual] = useState(false)
     const [rmPersonaId, setRmPersonaId] = useState('')
     const [rmPersonaNombre, setRmPersonaNombre] = useState('')
     const [rmBusqueda, setRmBusqueda] = useState('')
@@ -64,6 +67,25 @@ export default function PanelAdmin({ onVolver }) {
         if (seccion === 'operadores') cargarOperadores()
         if (seccion === 'configuracion') cargarConfig()
     }, [seccion])
+
+    async function cambiarPassword() {
+        setErrorPass('')
+        setOkPass(false)
+        if (!passNueva.trim()) return setErrorPass('Introduce la nueva contraseña')
+        if (passNueva.length < 6) return setErrorPass('La contraseña debe tener al menos 6 caracteres')
+        if (passNueva !== passNueva2) return setErrorPass('Las contraseñas no coinciden')
+
+        setLoadingPass(true)
+        const { error } = await supabase.auth.updateUser({ password: passNueva })
+        if (error) {
+            setErrorPass('Error: ' + error.message)
+        } else {
+            setOkPass(true)
+            setPassNueva('')
+            setPassNueva2('')
+        }
+        setLoadingPass(false)
+    }
 
     async function cargarPersonas() {
         setLoading(true)
@@ -246,7 +268,6 @@ export default function PanelAdmin({ onVolver }) {
 
     async function cargarConfig() {
         const { data } = await supabase.from('configuracion').select('*').single()
-        setConfig(data)
         setEditAforo(data?.aforo_maximo ?? 0)
         setEditNombreLocal(data?.nombre_local ?? '')
     }
@@ -334,9 +355,25 @@ export default function PanelAdmin({ onVolver }) {
                 <button style={{ ...styles.tab, ...(seccion === 'operadores' ? styles.tabActivo : {}) }} onClick={() => setSeccion('operadores')}>Operadores</button>
                 <button style={{ ...styles.tab, ...(seccion === 'configuracion' ? styles.tabActivo : {}) }} onClick={() => setSeccion('configuracion')}>⚙️ Config</button>
                 <button style={{ ...styles.tab, ...(seccion === 'registros' ? styles.tabActivo : {}) }} onClick={() => setSeccion('registros')}>📝 Registros</button>
+                <button style={{ ...styles.tab, ...(seccion === 'password' ? styles.tabActivo : {}) }} onClick={() => setSeccion('password')}>🔑 Contraseña</button>
             </div>
 
             {loading && <p style={styles.info}>Cargando...</p>}
+
+            {!loading && seccion === 'password' && (
+                <div style={styles.formulario}>
+                    <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Cambiar mi contraseña</h3>
+                    <label style={styles.label}>Nueva contraseña *</label>
+                    <input style={styles.input} type="password" value={passNueva} onChange={e => setPassNueva(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                    <label style={styles.label}>Repetir nueva contraseña *</label>
+                    <input style={styles.input} type="password" value={passNueva2} onChange={e => setPassNueva2(e.target.value)} placeholder="Repite la contraseña" />
+                    {errorPass && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorPass}</p>}
+                    {okPass && <p style={{ color: '#16a34a', fontSize: '0.875rem' }}>✅ Contraseña cambiada correctamente</p>}
+                    <button style={styles.btnGuardar} onClick={cambiarPassword} disabled={loadingPass}>
+                        {loadingPass ? 'Guardando...' : 'Cambiar contraseña'}
+                    </button>
+                </div>
+            )}
 
             {!loading && seccion === 'personas' && (
                 <div style={styles.lista}>
