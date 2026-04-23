@@ -18,9 +18,11 @@ export default function Accesos() {
   const [rol, setRol] = useState('')
   const [mostrarAdmin, setMostrarAdmin] = useState(false)
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
+  const [personasDentro, setPersonasDentro] = useState([])
 
   useEffect(() => {
     cargarAforo()
+    cargarPersonasDentro()
     supabase.from('configuracion').select('aforo_maximo').eq('id', 1).single()
       .then(({ data }) => {
         setAforoMaximo(data?.aforo_maximo ?? 0)
@@ -46,10 +48,19 @@ export default function Accesos() {
     setAforo(data?.length ?? 0)
   }
 
+  async function cargarPersonasDentro() {
+    const { data } = await supabase
+      .from('personas_con_estado')
+      .select('id, nombre, organizacion, carnet_upv, dni')
+      .eq('dentro_ahora', true)
+      .eq('activo', true)
+      .order('ultimo_acceso', { ascending: true })
+    setPersonasDentro(data ?? [])
+  }
+
   async function buscarPersonas(texto) {
     setBusqueda(texto)
     if (texto.length < 2) { setPersonas([]); return }
-
     setLoading(true)
     const { data } = await supabase
       .from('personas_con_estado')
@@ -57,7 +68,6 @@ export default function Accesos() {
       .or(`nombre.ilike.%${texto}%,dni.ilike.%${texto}%`)
       .eq('activo', true)
       .limit(10)
-
     setPersonas(data ?? [])
     setLoading(false)
   }
@@ -66,9 +76,9 @@ export default function Accesos() {
     const { error } = await supabase
       .from('registros_acceso')
       .insert({ persona_id: persona.id, tipo })
-
     if (!error) {
       await cargarAforo()
+      await cargarPersonasDentro()
       setPersonas(prev => prev.map(p =>
         p.id === persona.id
           ? { ...p, ultimo_tipo: tipo, dentro_ahora: tipo === 'entrada' }
@@ -122,6 +132,30 @@ export default function Accesos() {
           autoFocus
         />
       </div>
+
+      {personasDentro.length > 0 && (
+        <div style={styles.cuadroDins}>
+          <div style={styles.cuadroDinsHeader}>
+            <span style={styles.cuadroDinsTitulo}>👥 Dins ara — {personasDentro.length}</span>
+          </div>
+          <div style={styles.dinsList}>
+            {personasDentro.map(persona => (
+              <div key={persona.id} style={styles.dinsCard}>
+                <div style={styles.dinsInfo}>
+                  <span style={styles.dinsNombre}>{persona.nombre}</span>
+                  <span style={styles.dinsOrg}>{persona.organizacion}</span>
+                </div>
+                <button
+                  style={styles.btnSalidaDins}
+                  onClick={() => registrarAcceso(persona, 'salida')}
+                >
+                  Salida
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading && <p style={styles.info}>Buscando...</p>}
 
@@ -205,4 +239,13 @@ const styles = {
   btnHistorial: { padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111' },
   btnIcono: { padding: '0.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', fontSize: '1.1rem' },
   alerta: { backgroundColor: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '10px', padding: '0.875rem 1rem', marginBottom: '1rem', color: '#92400e', fontWeight: '600', textAlign: 'center' },
+  cuadroDins: { backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginBottom: '1rem', overflow: 'hidden' },
+  cuadroDinsHeader: { backgroundColor: '#eff6ff', padding: '0.6rem 1rem', borderBottom: '1px solid #dbeafe' },
+  cuadroDinsTitulo: { fontWeight: 'bold', fontSize: '0.9rem', color: '#1d4ed8' },
+  dinsList: { display: 'flex', flexDirection: 'column', maxHeight: '240px', overflowY: 'auto' },
+  dinsCard: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.6rem 1rem', borderBottom: '1px solid #f3f4f6' },
+  dinsInfo: { display: 'flex', flexDirection: 'column', gap: '0.1rem' },
+  dinsNombre: { fontSize: '0.9rem', fontWeight: '600', color: '#111' },
+  dinsOrg: { fontSize: '0.78rem', color: '#666' },
+  btnSalidaDins: { padding: '0.35rem 0.85rem', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', flexShrink: 0 },
 }
