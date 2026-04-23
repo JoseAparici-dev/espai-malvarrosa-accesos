@@ -54,7 +54,7 @@ export default function Accesos() {
       .select('id, nombre, organizacion, carnet_upv, dni')
       .eq('dentro_ahora', true)
       .eq('activo', true)
-      .order('ultimo_acceso', { ascending: true })
+      .order('nombre', { ascending: true })
     setPersonasDentro(data ?? [])
   }
 

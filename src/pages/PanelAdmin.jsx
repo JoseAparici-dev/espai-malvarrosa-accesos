@@ -173,18 +173,6 @@ export default function PanelAdmin({ onVolver }) {
         setLoadingEditar(false)
     }
 
-    async function eliminarOperador(id) {
-        if (!window.confirm('¿Seguro que quieres eliminar este operador?')) return
-
-        const { error } = await supabase.rpc('eliminar_operador', { p_id: id })
-
-        if (error) {
-            alert('No se puede eliminar: ' + error.message)
-        } else {
-            cargarOperadores()
-        }
-    }
-
     async function guardarPersona() {
         setErrorEditarPersona('')
         if (!editPersonaNombre.trim()) return setErrorEditarPersona('El nombre es obligatorio')
@@ -564,97 +552,91 @@ export default function PanelAdmin({ onVolver }) {
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
                                     style={styles.btnAccion}
-                                    onClick={() => { setOperadorEditando(o); setEditNombre(o.nombre); setEditEmail(o.email); setEditRol(o.rol); setEditPassword(''); setErrorEditar(''); window.scrollTo({top: 0, behavior: 'smooth' })}}
+                                    onClick={() => { setOperadorEditando(o); setEditNombre(o.nombre); setEditEmail(o.email); setEditRol(o.rol); setEditPassword(''); setErrorEditar(''); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                                 >
-                                Modificar
-                            </button>
-                            <button
-                                style={{ ...styles.btnToggle, backgroundColor: o.activo ? '#fee2e2' : '#d1fae5', color: o.activo ? '#991b1b' : '#065f46', opacity: o.id === miId ? 0.4 : 1 }}
-                                onClick={() => toggleActivo('operadores', o.id, o.activo)}
-                                disabled={o.id === miId}
-                            >
-                                {o.activo ? 'Desactivar' : 'Activar'}
-                            </button>
-                            <button
-                                style={{ ...styles.btnToggle, backgroundColor: '#fee2e2', color: '#991b1b', opacity: o.id === miId ? 0.4 : 1 }}
-                                onClick={() => eliminarOperador(o.id)}
-                                disabled={o.id === miId}
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                        </div>
-            ))}
-        </div>
-    )
-}
-{
-    !loading && seccion === 'configuracion' && (
-        <div style={styles.formulario}>
-            <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Configuración del local</h3>
-            <label style={styles.label}>Nombre del local</label>
-            <input style={styles.input} value={editNombreLocal} onChange={e => setEditNombreLocal(e.target.value)} />
-            <label style={styles.label}>Aforo máximo (0 = sin límite)</label>
-            <input style={styles.input} type="number" min="0" value={editAforo} onChange={e => setEditAforo(parseInt(e.target.value) || 0)} />
-            {okConfig && <p style={{ color: '#16a34a', fontSize: '0.875rem', marginBottom: '0.5rem' }}>✅ Guardado correctamente</p>}
-            <button style={styles.btnGuardar} onClick={guardarConfig} disabled={loadingConfig}>
-                {loadingConfig ? 'Guardando...' : 'Guardar configuración'}
-            </button>
-        </div>
-    )
-}
-{
-    !loading && seccion === 'registros' && (
-        <div style={styles.formulario}>
-            <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Registro manual de acceso</h3>
+                                    Modificar
+                                </button>
+                                <button
+                                    style={{ ...styles.btnToggle, backgroundColor: o.activo ? '#fee2e2' : '#d1fae5', color: o.activo ? '#991b1b' : '#065f46', opacity: o.id === miId ? 0.4 : 1 }}
+                                    onClick={() => toggleActivo('operadores', o.id, o.activo)}
+                                    disabled={o.id === miId}
+                                >
+                                    {o.activo ? 'Desactivar' : 'Activar'}
+                                </button>
 
-            <label style={styles.label}>Persona *</label>
-            <div style={{ position: 'relative', marginBottom: '1rem' }}>
-                <input
-                    style={{ ...styles.input, margin: 0 }}
-                    value={rmPersonaId ? rmPersonaNombre : rmBusqueda}
-                    onChange={e => buscarPersonasRm(e.target.value)}
-                    placeholder="Buscar por nombre..."
-                    readOnly={!!rmPersonaId}
-                />
-                {rmSugerencias.length > 0 && !rmPersonaId && (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 200 }}>
-                        {rmSugerencias.map(p => (
-                            <div key={p.id} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}
-                                onClick={() => { setRmPersonaId(p.id); setRmPersonaNombre(p.nombre); setRmSugerencias([]) }}>
-                                <strong>{p.nombre}</strong> — {p.organizacion}
                             </div>
-                        ))}
+                        </div>
+                    ))}
+                </div>
+            )
+            }
+            {
+                !loading && seccion === 'configuracion' && (
+                    <div style={styles.formulario}>
+                        <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Configuración del local</h3>
+                        <label style={styles.label}>Nombre del local</label>
+                        <input style={styles.input} value={editNombreLocal} onChange={e => setEditNombreLocal(e.target.value)} />
+                        <label style={styles.label}>Aforo máximo (0 = sin límite)</label>
+                        <input style={styles.input} type="number" min="0" value={editAforo} onChange={e => setEditAforo(parseInt(e.target.value) || 0)} />
+                        {okConfig && <p style={{ color: '#16a34a', fontSize: '0.875rem', marginBottom: '0.5rem' }}>✅ Guardado correctamente</p>}
+                        <button style={styles.btnGuardar} onClick={guardarConfig} disabled={loadingConfig}>
+                            {loadingConfig ? 'Guardando...' : 'Guardar configuración'}
+                        </button>
                     </div>
-                )}
-            </div>
-            {rmPersonaId && (
-                <button style={{ ...styles.btnCancelar, marginBottom: '1rem', fontSize: '0.8rem' }} onClick={() => { setRmPersonaId(''); setRmPersonaNombre(''); setRmBusqueda('') }}>
-                    ✕ Cambiar persona
-                </button>
-            )}
+                )
+            }
+            {
+                !loading && seccion === 'registros' && (
+                    <div style={styles.formulario}>
+                        <h3 style={{ margin: '0 0 1rem', color: '#111' }}>Registro manual de acceso</h3>
 
-            <label style={styles.label}>Tipo</label>
-            <select style={styles.input} value={rmTipo} onChange={e => setRmTipo(e.target.value)}>
-                <option value="entrada">Entrada</option>
-                <option value="salida">Salida</option>
-            </select>
+                        <label style={styles.label}>Persona *</label>
+                        <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                            <input
+                                style={{ ...styles.input, margin: 0 }}
+                                value={rmPersonaId ? rmPersonaNombre : rmBusqueda}
+                                onChange={e => buscarPersonasRm(e.target.value)}
+                                placeholder="Buscar por nombre..."
+                                readOnly={!!rmPersonaId}
+                            />
+                            {rmSugerencias.length > 0 && !rmPersonaId && (
+                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 200 }}>
+                                    {rmSugerencias.map(p => (
+                                        <div key={p.id} style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f0f0f0', fontSize: '0.875rem' }}
+                                            onClick={() => { setRmPersonaId(p.id); setRmPersonaNombre(p.nombre); setRmSugerencias([]) }}>
+                                            <strong>{p.nombre}</strong> — {p.organizacion}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        {rmPersonaId && (
+                            <button style={{ ...styles.btnCancelar, marginBottom: '1rem', fontSize: '0.8rem' }} onClick={() => { setRmPersonaId(''); setRmPersonaNombre(''); setRmBusqueda('') }}>
+                                ✕ Cambiar persona
+                            </button>
+                        )}
 
-            <label style={styles.label}>Fecha</label>
-            <input style={styles.input} type="date" value={rmFecha} onChange={e => setRmFecha(e.target.value)} />
+                        <label style={styles.label}>Tipo</label>
+                        <select style={styles.input} value={rmTipo} onChange={e => setRmTipo(e.target.value)}>
+                            <option value="entrada">Entrada</option>
+                            <option value="salida">Salida</option>
+                        </select>
 
-            <label style={styles.label}>Hora</label>
-            <input style={styles.input} type="time" value={rmHora} onChange={e => setRmHora(e.target.value)} />
+                        <label style={styles.label}>Fecha</label>
+                        <input style={styles.input} type="date" value={rmFecha} onChange={e => setRmFecha(e.target.value)} />
 
-            {errorRm && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorRm}</p>}
-            {okRm && <p style={{ color: '#16a34a', fontSize: '0.875rem' }}>✅ Registro guardado correctamente</p>}
+                        <label style={styles.label}>Hora</label>
+                        <input style={styles.input} type="time" value={rmHora} onChange={e => setRmHora(e.target.value)} />
 
-            <button style={styles.btnGuardar} onClick={guardarRegistroManual} disabled={loadingRm}>
-                {loadingRm ? 'Guardando...' : 'Guardar registro'}
-            </button>
-        </div>
-    )
-}
+                        {errorRm && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorRm}</p>}
+                        {okRm && <p style={{ color: '#16a34a', fontSize: '0.875rem' }}>✅ Registro guardado correctamente</p>}
+
+                        <button style={styles.btnGuardar} onClick={guardarRegistroManual} disabled={loadingRm}>
+                            {loadingRm ? 'Guardando...' : 'Guardar registro'}
+                        </button>
+                    </div>
+                )
+            }
         </div >
     )
 }
