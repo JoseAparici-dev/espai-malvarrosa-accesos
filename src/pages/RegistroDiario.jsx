@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function RegistroDiario({ onVolver }) {
     const hoy = new Date().toISOString().split('T')[0]
@@ -47,6 +49,45 @@ export default function RegistroDiario({ onVolver }) {
         return new Date(fechaStr + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     }
 
+    function generarPDF() {
+        const doc = new jsPDF()
+
+        const titulo = filtroTipo === 'entrada' ? 'Registro de entradas' :
+            filtroTipo === 'salida' ? 'Registro de salidas' :
+                'Registro de entradas y salidas'
+
+        doc.setFontSize(14)
+        doc.text(`Espai Malvarrosa (Mañanas)`, 14, 15)
+        doc.setFontSize(11)
+        doc.text(titulo, 14, 23)
+        doc.text(formatearFecha(fecha), 14, 30)
+
+        const columnas = filtroTipo === 'ambos'
+            ? ['Hora', 'Tipo', 'Nombre y Apellidos', 'Organización']
+            : ['Hora', 'DNI / UPV', 'Nombre y Apellidos', 'Organización']
+
+        const filas = registros.map(r => [
+            formatearHora(r.timestamp),
+            filtroTipo === 'ambos'
+                ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1)
+                : (r.personas.carnet_upv ? 'UPV' : r.personas.dni),
+            r.personas.nombre,
+            r.personas.organizaciones?.nombre ?? ''
+        ])
+
+        autoTable(doc, {
+            head: [columnas],
+            body: filas,
+            startY: 36,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [37, 99, 235] }
+        })
+
+        const blob = doc.output('blob')
+        const url = URL.createObjectURL(blob)
+        window.open(url, '_blank')
+    }
+
     return (
         <div style={styles.container}>
             <div style={styles.header}>
@@ -62,6 +103,9 @@ export default function RegistroDiario({ onVolver }) {
             <div style={styles.documento}>
                 <h2 style={styles.titulo}>Registro de entrada de personas en Espai Malvarrosa (Mañanas)</h2>
                 <p style={styles.fechaDoc}>{formatearFecha(fecha)}</p>
+                <button style={styles.btnPDF} onClick={generarPDF} disabled={registros.length === 0}>
+                    ⬇️ Descargar PDF
+                </button>
                 <div style={styles.filtroTipoBox}>
                     <button style={{ ...styles.btnTipo, ...(filtroTipo === 'entrada' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('entrada')}>Solo entradas</button>
                     <button style={{ ...styles.btnTipo, ...(filtroTipo === 'salida' ? styles.btnTipoActivo : {}) }} onClick={() => setFiltroTipo('salida')}>Solo salidas</button>
@@ -124,4 +168,5 @@ const styles = {
     filtroTipoBox: { display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' },
     btnTipo: { flex: 1, padding: '0.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111', fontSize: '0.875rem' },
     btnTipoActivo: { backgroundColor: '#2563eb', color: 'white', border: '1px solid #2563eb', fontWeight: 'bold' },
+    btnPDF: { padding: '0.5rem 1rem', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.875rem' },
 }

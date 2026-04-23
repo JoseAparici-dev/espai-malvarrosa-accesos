@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default function Historial({ onVolver }) {
   const hoy = new Date().toISOString().split('T')[0]
@@ -66,6 +68,46 @@ export default function Historial({ onVolver }) {
     return new Date(timestamp).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
   }
 
+  function generarPDF() {
+    const doc = new jsPDF()
+
+    const titulo = filtroTipo === 'entrada' ? 'Historial de entradas' :
+      filtroTipo === 'salida' ? 'Historial de salidas' :
+        'Historial de entradas y salidas'
+
+    doc.setFontSize(14)
+    doc.text('Espai Malvarrosa (Mañanas)', 14, 15)
+    doc.setFontSize(11)
+    doc.text(titulo, 14, 23)
+    doc.text(`${fechaDesde} — ${fechaHasta}`, 14, 30)
+
+    const columnas = filtroTipo === 'ambos'
+      ? ['Fecha', 'Hora', 'Tipo', 'Nombre y Apellidos', 'Organización']
+      : ['Fecha', 'Hora', 'DNI / UPV', 'Nombre y Apellidos', 'Organización']
+
+    const filas = registros.map(r => [
+      formatearFecha(r.timestamp),
+      formatearHora(r.timestamp),
+      filtroTipo === 'ambos'
+        ? r.tipo.charAt(0).toUpperCase() + r.tipo.slice(1)
+        : (r.personas.carnet_upv ? 'UPV' : r.personas.dni),
+      r.personas.nombre,
+      r.personas.organizaciones?.nombre ?? ''
+    ])
+
+    autoTable(doc, {
+      head: [columnas],
+      body: filas,
+      startY: 36,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [37, 99, 235] }
+    })
+
+    const blob = doc.output('blob')
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -111,7 +153,12 @@ export default function Historial({ onVolver }) {
       </div>
 
       {loading && <p style={styles.info}>Cargando...</p>}
-
+      
+      {buscado && registros.length > 0 && (
+        <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
+          <button style={styles.btnPDF} onClick={generarPDF}>⬇️ Descargar PDF</button>
+        </div>
+      )}
       {!loading && buscado && (
         <div style={styles.documento}>
           <table style={styles.tabla}>
@@ -164,6 +211,7 @@ const styles = {
   input: { padding: '0.625rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.9rem' },
   btnBuscar: { padding: '0.625rem 1.5rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', alignSelf: 'flex-end' },
   info: { textAlign: 'center', color: '#666' },
-  documento: { backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' },btnTipo: { padding: '0.5rem 0.75rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111', fontSize: '0.8rem' },
-btnTipoActivo: { backgroundColor: '#2563eb', color: 'white', border: '1px solid #2563eb', fontWeight: 'bold' },
+  documento: { backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }, btnTipo: { padding: '0.5rem 0.75rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111', fontSize: '0.8rem' },
+  btnTipoActivo: { backgroundColor: '#2563eb', color: 'white', border: '1px solid #2563eb', fontWeight: 'bold' },
+  btnPDF: { padding: '0.5rem 1rem', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.875rem' },
 }
