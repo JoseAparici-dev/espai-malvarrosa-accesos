@@ -353,9 +353,8 @@ export default function PanelAdmin({ onVolver }) {
                 <button style={{ ...styles.tab, ...(seccion === 'personas' ? styles.tabActivo : {}) }} onClick={() => setSeccion('personas')}>Personas</button>
                 <button style={{ ...styles.tab, ...(seccion === 'organizaciones' ? styles.tabActivo : {}) }} onClick={() => setSeccion('organizaciones')}>Organizaciones</button>
                 <button style={{ ...styles.tab, ...(seccion === 'operadores' ? styles.tabActivo : {}) }} onClick={() => setSeccion('operadores')}>Operadores</button>
-                <button style={{ ...styles.tab, ...(seccion === 'configuracion' ? styles.tabActivo : {}) }} onClick={() => setSeccion('configuracion')}>⚙️ Config</button>
                 <button style={{ ...styles.tab, ...(seccion === 'registros' ? styles.tabActivo : {}) }} onClick={() => setSeccion('registros')}>📝 Registros</button>
-                <button style={{ ...styles.tab, ...(seccion === 'password' ? styles.tabActivo : {}) }} onClick={() => setSeccion('password')}>🔑 Contraseña</button>
+                <button style={{ ...styles.tab, ...(seccion === 'configuracion' ? styles.tabActivo : {}) }} onClick={() => setSeccion('configuracion')}>⚙️ Config</button>
             </div>
 
             {loading && <p style={styles.info}>Cargando...</p>}

@@ -151,14 +151,14 @@ export default function Accesos() {
             <span style={styles.aforoNum}>{aforo}</span>
             <span style={styles.aforoLabel}>Dins ara</span>
           </div>
-          <button style={styles.btnIcono} onClick={() => window.open('https://bxvfheldvxgmcuhfbncq.supabase.co/storage/v1/object/public/Documentos/APP-manual_espai_malvarrosa.pdf', '_blank')} title="Manual d'ús">📖</button>
-          <button style={styles.btnIcono} onClick={() => setMostrarHistorial(true)} title="Historial">📅</button>
           <button style={styles.btnIcono} onClick={() => setMostrarRegistro(true)} title="Registro diario">📋</button>
+          <button style={styles.btnIcono} onClick={() => setMostrarHistorial(true)} title="Historial">📅</button>
+          <button style={styles.btnIcono} onClick={() => setMostrarPassword(true)} title="Cambiar contraseña">🔑</button>
           {esAdmin && (
             <button style={styles.btnIcono} onClick={() => setMostrarAdmin(true)} title="Administración">⚙️</button>
           )}
-          <button style={styles.btnIcono} onClick={() => setMostrarPassword(true)} title="Cambiar contraseña">🔑</button>
           <button style={styles.btnIcono} onClick={cerrarSesion} title="Salir">🚪</button>
+          <button style={styles.btnIcono} onClick={() => window.open('https://bxvfheldvxgmcuhfbncq.supabase.co/storage/v1/object/public/Documentos/APP-manual_espai_malvarrosa.pdf', '_blank')} title="Manual d'ús">📖</button>
         </div>
       </div>
 
