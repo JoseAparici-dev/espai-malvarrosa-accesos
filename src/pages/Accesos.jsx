@@ -21,6 +21,7 @@ export default function Accesos() {
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
   const [personasDentro, setPersonasDentro] = useState([])
   const [mostrarPassword, setMostrarPassword] = useState(false)
+  const [miId, setMiId] = useState(null)
 
   useEffect(() => {
     cargarAforo()
@@ -30,6 +31,7 @@ export default function Accesos() {
         setAforoMaximo(data?.aforo_maximo ?? 0)
       })
     supabase.auth.getUser().then(({ data: { user } }) => {
+      setMiId(user.id)
       supabase
         .from('operadores')
         .select('rol')
@@ -77,7 +79,7 @@ export default function Accesos() {
   async function registrarAcceso(persona, tipo) {
     const { error } = await supabase
       .from('registros_acceso')
-      .insert({ persona_id: persona.id, tipo })
+      .insert({ persona_id: persona.id, tipo, operador_id: miId })
     if (!error) {
       await cargarAforo()
       await cargarPersonasDentro()
@@ -95,9 +97,9 @@ export default function Accesos() {
 
   if (mostrarPassword) return <CambiarPassword onVolver={() => setMostrarPassword(false)} />
   if (rol === 'visualizador') return <VisualizadorAccesos onCerrarSesion={cerrarSesion} />
-  if (mostrarRegistro) return <RegistroDiario onVolver={() => setMostrarRegistro(false)} />
+  if (mostrarRegistro) return <RegistroDiario onVolver={() => setMostrarRegistro(false)} rol={rol} miId={miId} />
+  if (mostrarHistorial) return <Historial onVolver={() => setMostrarHistorial(false)} rol={rol} miId={miId} />
   if (mostrarAdmin) return <PanelAdmin onVolver={() => setMostrarAdmin(false)} />
-  if (mostrarHistorial) return <Historial onVolver={() => setMostrarHistorial(false)} />
 
   return (
     <div style={styles.container}>

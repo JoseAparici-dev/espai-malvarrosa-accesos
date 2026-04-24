@@ -3,7 +3,7 @@ import { supabase } from '../supabase'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-export default function RegistroDiario({ onVolver }) {
+export default function RegistroDiario({ onVolver, rol, miId }) {
     const hoy = new Date().toISOString().split('T')[0]
     const [fecha, setFecha] = useState(hoy)
     const [registros, setRegistros] = useState([])
@@ -14,23 +14,30 @@ export default function RegistroDiario({ onVolver }) {
         setLoading(true)
         const desde = `${fecha}T00:00:00`
         const hasta = `${fecha}T23:59:59`
-        const { data } = await supabase
+
+        let query = supabase
             .from('registros_acceso')
             .select(`
-        timestamp,
-        tipo,
-        personas (
-          nombre,
-          dni,
-          carnet_upv,
-          organizaciones ( nombre )
-        )
-      `)
+            timestamp,
+            tipo,
+            personas (
+                nombre,
+                dni,
+                carnet_upv,
+                organizaciones ( nombre )
+            )
+        `)
             .gte('timestamp', desde)
             .lte('timestamp', hasta)
             .in('tipo', filtroTipo === 'ambos' ? ['entrada', 'salida'] : [filtroTipo])
-            .order('timestamp', { ascending: true })
 
+        if (rol === 'operador' && miId) {
+            query = query.eq('operador_id', miId)
+        }
+
+        query = query.order('timestamp', { ascending: true })
+
+        const { data } = await query
         setRegistros(data ?? [])
         setLoading(false)
     }

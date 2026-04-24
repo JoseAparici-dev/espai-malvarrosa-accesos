@@ -6,8 +6,8 @@ import CambiarPassword from './CambiarPassword'
 export default function VisualizadorAccesos({ onCerrarSesion }) {
   const [vista, setVista] = useState('inicio')
 
-  if (vista === 'historial') return <Historial onVolver={() => setVista('inicio')} />
-  if (vista === 'registro') return <RegistroDiario onVolver={() => setVista('inicio')} />
+  if (vista === 'historial') return <Historial onVolver={() => setVista('inicio')} rol="visualizador" miId={null} />
+  if (vista === 'registro') return <RegistroDiario onVolver={() => setVista('inicio')} rol="visualizador" miId={null} />
   if (vista === 'password') return <CambiarPassword onVolver={() => setVista('inicio')} />
 
   return (

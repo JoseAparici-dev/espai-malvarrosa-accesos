@@ -328,7 +328,7 @@ export default function PanelAdmin({ onVolver }) {
 
         const { error } = await supabase
             .from('registros_acceso')
-            .insert({ persona_id: rmPersonaId, tipo: rmTipo, timestamp })
+            .insert({ persona_id: rmPersonaId, tipo: rmTipo, timestamp, operador_id: miId })
 
         if (error) {
             setErrorRm('Error al guardar: ' + error.message)

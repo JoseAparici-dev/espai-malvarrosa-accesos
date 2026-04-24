@@ -3,7 +3,7 @@ import { supabase } from '../supabase'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-export default function Historial({ onVolver }) {
+export default function Historial({ onVolver, rol, miId }) {
   const hoy = new Date().toISOString().split('T')[0]
   const [fechaDesde, setFechaDesde] = useState(hoy)
   const [fechaHasta, setFechaHasta] = useState(hoy)
@@ -27,19 +27,24 @@ export default function Historial({ onVolver }) {
     let query = supabase
       .from('registros_acceso')
       .select(`
-        timestamp,
-        tipo,
-        personas (
-          nombre,
-          dni,
-          carnet_upv,
-          organizaciones ( nombre )
-        )
-      `)
+            timestamp,
+            tipo,
+            personas (
+                nombre,
+                dni,
+                carnet_upv,
+                organizaciones ( nombre )
+            )
+        `)
       .in('tipo', filtroTipo === 'ambos' ? ['entrada', 'salida'] : [filtroTipo])
       .gte('timestamp', `${fechaDesde}T00:00:00`)
       .lte('timestamp', `${fechaHasta}T23:59:59`)
-      .order('timestamp', { ascending: false })
+
+    if (rol === 'operador' && miId) {
+      query = query.eq('operador_id', miId)
+    }
+
+    query = query.order('timestamp', { ascending: false })
 
     const { data } = await query
     let resultado = data ?? []
@@ -153,7 +158,7 @@ export default function Historial({ onVolver }) {
       </div>
 
       {loading && <p style={styles.info}>Cargando...</p>}
-      
+
       {buscado && registros.length > 0 && (
         <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
           <button style={styles.btnPDF} onClick={generarPDF}>⬇️ Descargar PDF</button>
