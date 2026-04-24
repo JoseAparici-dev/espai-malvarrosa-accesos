@@ -22,6 +22,9 @@ export default function Accesos() {
   const [personasDentro, setPersonasDentro] = useState([])
   const [mostrarPassword, setMostrarPassword] = useState(false)
   const [miId, setMiId] = useState(null)
+  const [filtroUpv, setFiltroUpv] = useState(null) // null=todos, true=UPV, false=externa
+  const [filtroOrg, setFiltroOrg] = useState('')
+  const [organizaciones, setOrganizaciones] = useState([])
 
   useEffect(() => {
     cargarAforo()
@@ -42,7 +45,13 @@ export default function Accesos() {
           setRol(data?.rol ?? '')
         })
     })
+    supabase.from('organizaciones').select('id, nombre, tipo').eq('activo', true).order('nombre')
+      .then(({ data }) => setOrganizaciones(data ?? []))
   }, [])
+
+  useEffect(() => {
+    if (busqueda.length >= 2) buscarPersonas(busqueda)
+  }, [filtroUpv, filtroOrg])
 
   async function cargarAforo() {
     const { data } = await supabase
@@ -66,12 +75,18 @@ export default function Accesos() {
     setBusqueda(texto)
     if (texto.length < 2) { setPersonas([]); return }
     setLoading(true)
-    const { data } = await supabase
+    let query = supabase
       .from('personas_con_estado')
       .select('*')
       .or(`nombre.ilike.%${texto}%,dni.ilike.%${texto}%`)
       .eq('activo', true)
-      .limit(10)
+
+    if (filtroUpv === true) query = query.eq('carnet_upv', true)
+    if (filtroUpv === false) query = query.eq('carnet_upv', false)
+    if (filtroOrg) query = query.eq('organizacion_id', filtroOrg)
+
+    query = query.limit(10)
+    const { data } = await query
     setPersonas(data ?? [])
     setLoading(false)
   }
@@ -128,6 +143,23 @@ export default function Accesos() {
           ⚠️ Aforo máximo alcanzado ({aforo}/{aforoMaximo}) — se pueden seguir registrando entradas
         </div>
       )}
+
+      <div style={styles.filtrosBox}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={{ ...styles.btnFiltro, ...(filtroUpv === null ? styles.btnFiltroActivo : {}) }} onClick={() => { setFiltroUpv(null); setFiltroOrg('') }}>Todos</button>
+          <button style={{ ...styles.btnFiltro, ...(filtroUpv === true ? styles.btnFiltroActivo : {}) }} onClick={() => { setFiltroUpv(true); setFiltroOrg('') }}>🏛️ UPV</button>
+          <button style={{ ...styles.btnFiltro, ...(filtroUpv === false ? styles.btnFiltroActivo : {}) }} onClick={() => { setFiltroUpv(false); setFiltroOrg('') }}>🏢 Externa</button>
+        </div>
+        {filtroUpv !== null && (
+          <select style={styles.selectOrg} value={filtroOrg} onChange={e => setFiltroOrg(e.target.value)}>
+            <option value="">{filtroUpv ? 'Todos los departamentos UPV' : 'Todas las empresas externas'}</option>
+            {organizaciones
+              .filter(o => filtroUpv ? o.tipo === 'upv' : o.tipo === 'externa')
+              .map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)
+            }
+          </select>
+        )}
+      </div>
 
       <div style={styles.buscadorBox}>
         <input
@@ -254,4 +286,8 @@ const styles = {
   dinsNombre: { fontSize: '0.9rem', fontWeight: '600', color: '#111' },
   dinsOrg: { fontSize: '0.78rem', color: '#666' },
   btnSalidaDins: { padding: '0.35rem 0.85rem', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', flexShrink: 0 },
+  filtrosBox: { display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' },
+  btnFiltro: { flex: 1, padding: '0.5rem', border: '1px solid #ddd', borderRadius: '8px', background: 'white', cursor: 'pointer', color: '#111', fontSize: '0.85rem' },
+  btnFiltroActivo: { backgroundColor: '#2563eb', color: 'white', border: '1px solid #2563eb', fontWeight: 'bold' },
+  selectOrg: { width: '100%', padding: '0.625rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.9rem' },
 }

@@ -395,7 +395,10 @@ export default function PanelAdmin({ onVolver }) {
                             )}
                             <label style={styles.label}>Organización *</label>
                             <select style={styles.input} value={editPersonaOrgId} onChange={e => setEditPersonaOrgId(e.target.value)}>
-                                {organizaciones.filter(o => o.activo).map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)}
+                                {organizaciones
+                                    .filter(o => o.activo && (editPersonaCarnetUpv ? o.tipo === 'upv' : o.tipo === 'externa'))
+                                    .map(o => <option key={o.id} value={o.id}>{o.nombre}</option>)
+                                }
                             </select>
                             {errorEditarPersona && <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>{errorEditarPersona}</p>}
                             <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
