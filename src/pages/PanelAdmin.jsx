@@ -389,7 +389,7 @@ export default function PanelAdmin({ onVolver }) {
                             </div>
                             {!editPersonaCarnetUpv && (
                                 <>
-                                    <label style={styles.label}>DNI *</label>
+                                    <label style={styles.label}>DNI / NIE *</label>
                                     <input style={styles.input} value={editPersonaDni} onChange={e => setEditPersonaDni(e.target.value)} />
                                 </>
                             )}

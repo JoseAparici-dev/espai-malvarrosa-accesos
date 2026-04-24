@@ -129,8 +129,8 @@ export default function NuevaPersona({ onGuardado, onCancelar, nombreInicial = '
 
         {!carnetUpv && (
           <>
-            <label style={styles.label}>DNI *</label>
-            <input style={styles.input} value={dni} onChange={e => setDni(e.target.value)} placeholder="12345678A" />
+            <label style={styles.label}>DNI / NIE *</label>
+            <input style={styles.input} value={dni} onChange={e => setDni(e.target.value)} placeholder="12345678A o X1234567A" />
           </>
         )}
 
