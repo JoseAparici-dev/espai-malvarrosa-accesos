@@ -5,6 +5,7 @@ import RegistroDiario from './RegistroDiario'
 import PanelAdmin from './PanelAdmin'
 import Historial from './Historial'
 import VisualizadorAccesos from './VisualizadorAccesos'
+import CambiarPassword from './CambiarPassword'
 
 export default function Accesos() {
   const [busqueda, setBusqueda] = useState('')
@@ -19,6 +20,7 @@ export default function Accesos() {
   const [mostrarAdmin, setMostrarAdmin] = useState(false)
   const [mostrarHistorial, setMostrarHistorial] = useState(false)
   const [personasDentro, setPersonasDentro] = useState([])
+  const [mostrarPassword, setMostrarPassword] = useState(false)
 
   useEffect(() => {
     cargarAforo()
@@ -91,6 +93,7 @@ export default function Accesos() {
     await supabase.auth.signOut()
   }
 
+  if (mostrarPassword) return <CambiarPassword onVolver={() => setMostrarPassword(false)} />
   if (rol === 'visualizador') return <VisualizadorAccesos onCerrarSesion={cerrarSesion} />
   if (mostrarRegistro) return <RegistroDiario onVolver={() => setMostrarRegistro(false)} />
   if (mostrarAdmin) return <PanelAdmin onVolver={() => setMostrarAdmin(false)} />
@@ -113,6 +116,7 @@ export default function Accesos() {
           {esAdmin && (
             <button style={styles.btnIcono} onClick={() => setMostrarAdmin(true)} title="Administración">⚙️</button>
           )}
+          <button style={styles.btnIcono} onClick={() => setMostrarPassword(true)} title="Cambiar contraseña">🔑</button>
           <button style={styles.btnIcono} onClick={cerrarSesion} title="Salir">🚪</button>
         </div>
       </div>

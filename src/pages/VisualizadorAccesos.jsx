@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import Historial from './Historial'
 import RegistroDiario from './RegistroDiario'
+import CambiarPassword from './CambiarPassword'
 
 export default function VisualizadorAccesos({ onCerrarSesion }) {
   const [vista, setVista] = useState('inicio')
 
   if (vista === 'historial') return <Historial onVolver={() => setVista('inicio')} />
   if (vista === 'registro') return <RegistroDiario onVolver={() => setVista('inicio')} />
+  if (vista === 'password') return <CambiarPassword onVolver={() => setVista('inicio')} />
 
   return (
     <div style={styles.container}>
@@ -15,7 +17,10 @@ export default function VisualizadorAccesos({ onCerrarSesion }) {
           <h1 style={styles.titulo}>Espai Malvarrosa</h1>
           <p style={styles.subtitulo}>Control d'accessos — Consulta</p>
         </div>
-        <button style={styles.btnIcono} onClick={onCerrarSesion} title="Salir">🚪</button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={styles.btnIcono} onClick={() => setVista('password')} title="Cambiar contraseña">🔑</button>
+          <button style={styles.btnIcono} onClick={onCerrarSesion} title="Salir">🚪</button>
+        </div>
       </div>
 
       <div style={styles.opciones}>
