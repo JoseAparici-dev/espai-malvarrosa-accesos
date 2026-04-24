@@ -18,6 +18,7 @@ export default function VisualizadorAccesos({ onCerrarSesion }) {
           <p style={styles.subtitulo}>Control d'accessos — Consulta</p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button style={styles.btnIcono} onClick={() => window.open('https://bxvfheldvxgmcuhfbncq.supabase.co/storage/v1/object/public/Documentos/APP-manual_espai_malvarrosa.pdf', '_blank')} title="Manual d'ús">📖</button>
           <button style={styles.btnIcono} onClick={() => setVista('password')} title="Cambiar contraseña">🔑</button>
           <button style={styles.btnIcono} onClick={onCerrarSesion} title="Salir">🚪</button>
         </div>

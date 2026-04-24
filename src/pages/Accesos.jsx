@@ -128,6 +128,7 @@ export default function Accesos() {
             <span style={styles.aforoNum}>{aforo}</span>
             <span style={styles.aforoLabel}>Dins ara</span>
           </div>
+          <button style={styles.btnIcono} onClick={() => window.open('https://bxvfheldvxgmcuhfbncq.supabase.co/storage/v1/object/public/Documentos/APP-manual_espai_malvarrosa.pdf', '_blank')} title="Manual d'ús">📖</button>
           <button style={styles.btnIcono} onClick={() => setMostrarHistorial(true)} title="Historial">📅</button>
           <button style={styles.btnIcono} onClick={() => setMostrarRegistro(true)} title="Registro diario">📋</button>
           {esAdmin && (
