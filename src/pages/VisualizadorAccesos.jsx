@@ -1,10 +1,18 @@
-import { useState } from 'react'
 import Historial from './Historial'
 import RegistroDiario from './RegistroDiario'
 import CambiarPassword from './CambiarPassword'
+import { useState, useEffect } from 'react'
+import { supabase } from '../supabase'
+import ContactoAdmin from './ContactoAdmin'
 
 export default function VisualizadorAccesos({ onCerrarSesion }) {
   const [vista, setVista] = useState('inicio')
+  const [mostrarContacto, setMostrarContacto] = useState(false)
+  const [miEmail, setMiEmail] = useState('')
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setMiEmail(user.email))
+  }, [])
 
   if (vista === 'historial') return <Historial onVolver={() => setVista('inicio')} rol="visualizador" miId={null} />
   if (vista === 'registro') return <RegistroDiario onVolver={() => setVista('inicio')} rol="visualizador" miId={null} />
@@ -34,6 +42,16 @@ export default function VisualizadorAccesos({ onCerrarSesion }) {
           <span style={styles.btnTexto}>Historial</span>
         </button>
       </div>
+      <div style={styles.footer}>
+        <button style={styles.btnContacto} onClick={() => setMostrarContacto(true)}>
+          ✉️ Contactar con el administrador
+        </button>
+      </div>
+      {
+        mostrarContacto && (
+          <ContactoAdmin onCerrar={() => setMostrarContacto(false)} emailUsuario={miEmail} />
+        )
+      }
     </div>
   )
 }
@@ -48,4 +66,6 @@ const styles = {
   btnOpcion: { flex: 1, padding: '2rem 1rem', backgroundColor: 'white', border: '1px solid #ddd', borderRadius: '12px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' },
   btnIconoGrande: { fontSize: '2.5rem' },
   btnTexto: { fontSize: '1rem', fontWeight: 'bold', color: '#111' },
+  footer: { textAlign: 'center', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #f0f0f0' },
+  btnContacto: { background: 'none', border: 'none', color: '#9ca3af', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' },
 }

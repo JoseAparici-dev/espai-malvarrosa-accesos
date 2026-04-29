@@ -6,6 +6,7 @@ import PanelAdmin from './PanelAdmin'
 import Historial from './Historial'
 import VisualizadorAccesos from './VisualizadorAccesos'
 import CambiarPassword from './CambiarPassword'
+import ContactoAdmin from './ContactoAdmin'
 
 export default function Accesos() {
   const [busqueda, setBusqueda] = useState('')
@@ -27,6 +28,8 @@ export default function Accesos() {
   const [organizaciones, setOrganizaciones] = useState([])
   const [personasOrg, setPersonasOrg] = useState([])
   const [loadingOrg, setLoadingOrg] = useState(false)
+  const [mostrarContacto, setMostrarContacto] = useState(false)
+  const [miEmail, setMiEmail] = useState('')
 
   useEffect(() => {
     cargarAforo()
@@ -35,6 +38,7 @@ export default function Accesos() {
       .then(({ data }) => setAforoMaximo(data?.aforo_maximo ?? 0))
     supabase.auth.getUser().then(({ data: { user } }) => {
       setMiId(user.id)
+      setMiEmail(user.email)
       supabase.from('operadores').select('rol').eq('id', user.id).single()
         .then(({ data }) => {
           setEsAdmin(data?.rol === 'admin')
@@ -319,6 +323,18 @@ export default function Accesos() {
           </div>
         ))}
       </div>
+      <div style={styles.footer}>
+        <button style={styles.btnContacto} onClick={() => setMostrarContacto(true)}>
+          ✉️ Contactar con el administrador
+        </button>
+      </div>
+
+      {
+        mostrarContacto && (
+          <ContactoAdmin onCerrar={() => setMostrarContacto(false)} emailUsuario={miEmail} />
+        )
+      }
+
     </div>
   )
 }
@@ -366,4 +382,6 @@ const styles = {
   cuadroOrg: { backgroundColor: 'white', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginBottom: '1rem', overflow: 'hidden' },
   cuadroOrgHeader: { backgroundColor: '#f0fdf4', padding: '0.6rem 1rem', borderBottom: '1px solid #bbf7d0' },
   cuadroOrgTitulo: { fontWeight: 'bold', fontSize: '0.9rem', color: '#15803d' },
+  footer: { textAlign: 'center', marginTop: '2rem', paddingTop: '1rem', borderTop: '1px solid #f0f0f0' },
+  btnContacto: { background: 'none', border: 'none', color: '#9ca3af', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' },
 }
